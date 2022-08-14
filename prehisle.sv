@@ -595,7 +595,7 @@ wire [11:0] pal2 [0:15] = '{12'ha00,12'hc11,12'he42,12'hf74,12'h121,12'h242,12'h
 wire [11:0] pal3 [0:15] = '{12'h541,12'h975,12'h482,12'h251,12'h121,12'h6ed,12'h0cb,12'h0a9,12'h087,12'h065,12'h9cf,12'h6ae,12'h38d,12'h06c,12'h04b,12'h000};
 // 0xffaa0000,0xffcc1111,0xffee4422,0xffff7744,0xff112211,0xff224422,0xff336622,0xff558833,0xff669944,0xff99bb55,0xff110000,0xffccdd77,0xffeeee99,0xff440000,0xffffffff,0xff000000
 
-reg [3:0] tile_state;
+reg [4:0] tile_state;
 reg [8:0] x;
 wire [8:0] tx_x = x ;
 wire [8:0] tx_y = vc ;
@@ -630,16 +630,22 @@ always @ (posedge clk_sys) begin
             txt_ram_addr <= { tx_y[7:3], tx_x[7:3] }; 
             tile_state <= 2;
         end else if ( tile_state == 2) begin  
+            // address is valid - need more more cycle to read 
+            tile_state <= 3;
+        end else if ( tile_state == 3) begin  
             txt_rom_addr <= { txt_ram_dout[11:0], vc[2:0] } ;
             txt_rom_cs <= 1;
-            tile_state <= 3;
-        end else if ( tile_state == 3) begin              
+            tile_state <= 4;
+        end else if ( tile_state == 4) begin             
+            // address is valid - need more more cycle to read 
+            tile_state <= 5;
+        end else if ( tile_state == 5) begin              
             if ( txt_rom_valid == 1 ) begin
                 txt_rom_cs <= 0;
                 pix_data <= txt_rom_data;
-                tile_state <= 4 ;
+                tile_state <= 6 ;
             end
-        end else if ( tile_state == 4) begin 
+        end else if ( tile_state == 6) begin 
             pri_buf[x] <= 1;
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_tx_w <= 1;
@@ -659,30 +665,35 @@ always @ (posedge clk_sys) begin
                 end
                 x <= x + 1;
             end else begin
-                tile_state <= 5;
+                tile_state <= 7;
             end
-        end else if ( tile_state == 5) begin             
+        end else if ( tile_state == 7) begin             
             line_buf_tx_w <= 0;
             x <= 0;
-            tile_state <= 6;
-//            tile_state <= 0;
-        // fg
+            tile_state <= 11;
 
-        end else if ( tile_state == 6) begin             
+        // fg
+        end else if ( tile_state == 11) begin             
             line_buf_fg_w <= 0;
             fg_ram_addr <= fg_tile ; 
-            tile_state <= 7;
-        end else if ( tile_state == 7) begin  
-            fg_rom_addr <= { fg_ram_dout[10:0], ~fg_x[3], fg_y[3:0] } ;
+            tile_state <= 12;
+        end else if ( tile_state == 12) begin  
+            // address is valid - need more more cycle to read 
+            tile_state <= 13;
+        end else if ( tile_state == 13) begin  
+            fg_rom_addr <= { fg_ram_dout[10:0], fg_x[3], { 4 { fg_ram_dout[11] } } ^ fg_y[3:0] } ;
             fg_rom_cs <= 1;
-            tile_state <= 8;
-        end else if ( tile_state == 8) begin              
+            tile_state <= 14;
+        end else if ( tile_state == 14) begin  
+            // address is valid - need more more cycle to read 
+            tile_state <= 15;
+        end else if ( tile_state == 15) begin              
             if ( fg_rom_valid == 1 ) begin
                 fg_rom_cs <= 0;
                 pix_data <= fg_rom_data;
-                tile_state <= 9 ;
+                tile_state <= 16 ;
             end
-        end else if ( tile_state == 9) begin 
+        end else if ( tile_state == 16) begin 
             line_buf_addr_w <= { vc[0], x[8:0] }; 
             line_buf_fg_w <= 1;
             case ( fg_x[2:0] ) // case ( x[2:0] )
@@ -697,54 +708,60 @@ always @ (posedge clk_sys) begin
             endcase
             if ( x < 255 ) begin
                 if ( fg_x[2:0] == 3'b111 ) begin // if ( x[2:0] == 3'b111 ) begin
-                    tile_state <= 6;
-                end
-                x <= x + 1;
-            end else begin
-                tile_state <= 10;
-            end
-        end else if ( tile_state == 10) begin   
-            line_buf_fg_w <= 0;
-            tile_state <= 11;    
-            x <= 0;  
-        // bg
-
-        end else if ( tile_state == 11) begin             
-            line_buf_bg_w <= 0;
-            tilemap_rom_addr <= bg_tile ; 
-            tile_state <= 12;
-        end else if ( tile_state == 12) begin  
-            bg_rom_addr <= { tilemap_rom_data[10:0], ~bg_x[3], bg_y[3:0] } ;
-            bg_rom_cs <= 1;
-            tile_state <= 13;
-        end else if ( tile_state == 13) begin              
-            if ( bg_rom_valid == 1 ) begin
-                bg_rom_cs <= 0;
-                pix_data <= bg_rom_data;
-                tile_state <= 14 ;
-            end
-        end else if ( tile_state == 14) begin 
-            line_buf_addr_w <= { vc[0], x[8:0] };
-            line_buf_bg_w <= 1;
-            case ( bg_x[2:0] ) // case ( x[2:0] )
-                0: line_buf_din <= { bg_rom_data[15:12], pix_data[31:28] }; 
-                1: line_buf_din <= { bg_rom_data[15:12], pix_data[27:24] }; 
-                2: line_buf_din <= { bg_rom_data[15:12], pix_data[23:20] }; 
-                3: line_buf_din <= { bg_rom_data[15:12], pix_data[19:16] }; 
-                4: line_buf_din <= { bg_rom_data[15:12], pix_data[15:12] }; 
-                5: line_buf_din <= { bg_rom_data[15:12], pix_data[11:8] }; 
-                6: line_buf_din <= { bg_rom_data[15:12], pix_data[7:4] }; 
-                7: line_buf_din <= { bg_rom_data[15:12], pix_data[3:0] }; 
-            endcase
-            if ( x < 255 ) begin
-                if ( bg_x[2:0] == 3'b111 ) begin // if ( x[2:0] == 3'b111 ) begin
                     tile_state <= 11;
                 end
                 x <= x + 1;
             end else begin
-                tile_state <= 15;
+                tile_state <= 17;
             end
-        end else if ( tile_state == 15) begin   
+        end else if ( tile_state == 17) begin   
+            line_buf_fg_w <= 0;
+            tile_state <= 21;    
+            x <= 0;  
+        // bg
+
+        end else if ( tile_state == 21) begin             
+            line_buf_bg_w <= 0;
+            tilemap_rom_addr <= bg_tile ; 
+            tile_state <= 22;
+        end else if ( tile_state == 22) begin  
+            // address is valid - need more more cycle to read 
+            tile_state <= 23;
+        end else if ( tile_state == 23) begin  
+            bg_rom_addr <= { tilemap_rom_data[10:0], tilemap_rom_data[11] ^ bg_x[3], bg_y[3:0] } ;
+            bg_rom_cs <= 1;
+            tile_state <= 24;
+        end else if ( tile_state == 24) begin  
+            // address is valid - need more more cycle to read 
+            tile_state <= 25;
+        end else if ( tile_state == 25) begin              
+            if ( bg_rom_valid == 1 ) begin
+                bg_rom_cs <= 0;
+                pix_data <= bg_rom_data;
+                tile_state <= 26 ;
+            end
+        end else if ( tile_state == 26) begin 
+            line_buf_addr_w <= { vc[0], x[8:0] };
+            line_buf_bg_w <= 1;
+            case ( { 3 { tilemap_rom_data[11] } } ^ bg_x[2:0] ) // case ( x[2:0] )
+                0: line_buf_din <= { tilemap_rom_data[15:12], pix_data[31:28] }; 
+                1: line_buf_din <= { tilemap_rom_data[15:12], pix_data[27:24] }; 
+                2: line_buf_din <= { tilemap_rom_data[15:12], pix_data[23:20] }; 
+                3: line_buf_din <= { tilemap_rom_data[15:12], pix_data[19:16] }; 
+                4: line_buf_din <= { tilemap_rom_data[15:12], pix_data[15:12] }; 
+                5: line_buf_din <= { tilemap_rom_data[15:12], pix_data[11:8] }; 
+                6: line_buf_din <= { tilemap_rom_data[15:12], pix_data[7:4] }; 
+                7: line_buf_din <= { tilemap_rom_data[15:12], pix_data[3:0] }; 
+            endcase
+            if ( x < 255 ) begin
+                if ( bg_x[2:0] == 3'b111 ) begin // if ( x[2:0] == 3'b111 ) begin
+                    tile_state <= 21;
+                end
+                x <= x + 1;
+            end else begin
+                tile_state <= 27;
+            end
+        end else if ( tile_state == 27) begin   
             line_buf_bg_w <= 0;
             tile_state <= 0;      
             
@@ -761,72 +778,63 @@ reg [23:0] rgb_tx;
 reg [23:0] rgb_fg;
 reg [23:0] rgb_bg;
 
+//always @ (posedge clk_sys) begin
+//    if ( reset == 1 ) begin
+//    end else if ( clk_6M == 1 ) begin
+//        if ( hc < 256 ) begin
+//            line_buf_addr_r <= { ~vc[0], hc[8:0] };
+//
+//            tx <= line_buf_tx_out[3:0] ;
+//            fg <= line_buf_fg_out[3:0] ;
+//            bg <= line_buf_bg_out[3:0] ;
+//            
+//            rgb <= { pal3[bg][11:8],4'h0,pal3[bg][7:4],4'h0,pal3[bg][3:0],4'h0 };
+//
+//            if ( fg < 15 ) begin
+//                rgb <= { pal2[fg][11:8],4'h0,pal2[fg][7:4],4'h0,pal2[fg][3:0],4'h0 };
+//            end
+//            
+//            if ( tx < 15 ) begin
+//                rgb <= { pal[tx][11:8],4'h0,pal[tx][7:4],4'h0,pal[tx][3:0],4'h0 };
+//            end
+//        end
+//    end
+//end
+
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
-    end else if ( clk_6M == 1 ) begin
+    end else begin
         if ( hc < 256 ) begin
-            line_buf_addr_r <= { ~vc[0], hc[8:0] };
-
-            tx <= line_buf_tx_out[3:0] ;
-            fg <= line_buf_fg_out[3:0] ;
-            bg <= line_buf_bg_out[3:0] ;
-            
-            rgb <= { pal3[bg][11:8],4'h0,pal3[bg][7:4],4'h0,pal3[bg][3:0],4'h0 };
-
-            if ( fg < 15 ) begin
-                rgb <= { pal2[fg][11:8],4'h0,pal2[fg][7:4],4'h0,pal2[fg][3:0],4'h0 };
+            if ( clk6_count == 1 ) begin
+                line_buf_addr_r <= { ~vc[0], hc[8:0] };
+            end else if ( clk6_count == 2 ) begin
+                tx <= line_buf_tx_out[7:0] ;
+                fg <= line_buf_fg_out[7:0] ;
+                bg <= line_buf_bg_out[7:0] ;
+            end else if ( clk6_count == 3 ) begin                
+                tile_pal_addr <= 12'd768 + bg ;
+            end else if ( clk6_count == 5 ) begin                
+                rgb_bg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
+                tile_pal_addr <= 12'd512 + fg ;
+            end else if ( clk6_count == 7 ) begin                
+                rgb_fg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
+                tile_pal_addr <= tx ;
+            end else if ( clk6_count == 9 ) begin                
+                rgb_tx <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
+            end else if ( clk6_count == 0 ) begin                                
+                rgb <= rgb_bg;
+                if ( fg[3:0] < 15 ) begin
+                    rgb <= rgb_fg;
+                end
+                
+                if ( tx[3:0] < 15 ) begin
+                    rgb <= rgb_tx;
+                end
             end
             
-            if ( tx < 15 ) begin
-                rgb <= { pal[tx][11:8],4'h0,pal[tx][7:4],4'h0,pal[tx][3:0],4'h0 };
-            end
         end
     end
 end
-
-//always @ (posedge clk_sys) begin
-////    if ( reset == 1 ) begin
-////    end else if ( clk_6M == 1 ) begin
-//        if ( hc < 256 ) begin
-//            if ( clk6_count == 1 ) begin
-//                line_buf_addr_r <= { ~vc[0], hc[8:0] };
-//            end else if ( clk6_count == 2 ) begin
-//                tx <= line_buf_tx_out[7:0] ;
-//                fg <= line_buf_fg_out[7:0] ;
-//                bg <= line_buf_bg_out[7:0] ;
-//            end else if ( clk6_count == 3 ) begin                
-//                tile_pal_addr <= 12'd768 + bg ;
-//            end else if ( clk6_count == 4 ) begin                
-//                rgb_bg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-//                tile_pal_addr <= 12'd512 + fg ;
-//            end else if ( clk6_count == 5 ) begin                
-//                rgb_fg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-//                tile_pal_addr <= tx ;
-//            end else if ( clk6_count == 6 ) begin                
-//                rgb_tx <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-//            end else if ( clk6_count == 0 ) begin                                
-//                rgb <= rgb_bg;
-//                if ( fg[3:0] < 15 ) begin
-//                    rgb <= rgb_fg;
-//                end
-//                
-//                if ( tx[3:0] < 15 ) begin
-//                    rgb <= rgb_tx;
-//                end
-//            end
-//            
-////            rgb <= { pal3[bg][11:8],4'h0,pal3[bg][7:4],4'h0,pal3[bg][3:0],4'h0 };
-////
-////            if ( fg < 15 ) begin
-////                rgb <= { pal2[fg][11:8],4'h0,pal2[fg][7:4],4'h0,pal2[fg][3:0],4'h0 };
-////            end
-////            
-////            if ( tx < 15 ) begin
-////                rgb <= { pal[tx][11:8],4'h0,pal[tx][7:4],4'h0,pal[tx][3:0],4'h0 };
-////            end
-//        end
-////    end
-//end
 
 
 /// 68k cpu
