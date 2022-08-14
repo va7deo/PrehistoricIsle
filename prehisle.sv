@@ -597,8 +597,8 @@ wire [11:0] pal3 [0:15] = '{12'h541,12'h975,12'h482,12'h251,12'h121,12'h6ed,12'h
 
 reg [3:0] tile_state;
 reg [8:0] x;
-wire [8:0] tx_x = x + 9'd8;
-wire [8:0] tx_y = vc + 9'd16;
+wire [8:0] tx_x = x ;
+wire [8:0] tx_y = vc ;
 
 reg [2:0] pri_buf[0:255];
 
