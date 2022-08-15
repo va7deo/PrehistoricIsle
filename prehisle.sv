@@ -338,7 +338,7 @@ reg p1_invert;
 
 always @ (posedge clk_sys ) begin
     p1 <= 16'hffff;
-    p1[7:0] <= { 8 {p1_invert} } ^ { start1, p1_buttons[2:0], p1_right, p1_left , p1_down, p1_up};
+    p1[7:0] <= { 8 {p1_invert} } ^ ~{ start1, p1_buttons[2:0], p1_right, p1_left , p1_down, p1_up};
 
     p2 <= 16'hffff;
     p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left , p2_down, p2_up};
