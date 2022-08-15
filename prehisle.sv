@@ -607,15 +607,15 @@ reg [31:0] pix_data;
 //reg txt_rom_cs;
 //wire txt_rom_valid;
 
-wire [11:0] fg_x = x  + fg_scroll_x ;
+wire [13:0] fg_x = x  + fg_scroll_x ;
 wire  [8:0] fg_y = vc + fg_scroll_y ;
 
-wire [11:0] bg_x = x  + bg_scroll_x ;
+wire [13:0] bg_x = x  + bg_scroll_x ;
 wire  [8:0] bg_y = vc + bg_scroll_y ;
 
 wire  [9:0] txt_tile = { vc[7:3], hc[7:3] };
-wire [12:0] fg_tile  = { fg_x[10:4], fg_y[8:4] } ; 
-wire [12:0] bg_tile  = { bg_x[10:4], bg_y[8:4] } ; 
+wire [14:0] fg_tile  = { fg_x[10:4], fg_y[8:4] } ; 
+wire [14:0] bg_tile  = { bg_x[13:4], bg_y[8:4] } ; 
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
