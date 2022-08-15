@@ -1,10 +1,10 @@
 <misterromdescription>
-    <name>Prehistoric Isle in 1930 (World)</name>
-    <setname>prehisle</setname>
+    <name>Genshitou 1930's</name>
+    <setname>gensitou</setname>
     <mameversion>0245</mameversion>
     <year>1989</year>
     <manufacturer>SNK (Alpha Denshi)</manufacturer>
-    <region>World</region>
+    <region>Japan</region>
     <rbf>prehisle</rbf>
 
     <switches default="ff,ff">
@@ -24,11 +24,11 @@
 
     <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,Y,L,R,Start"/>
 
-    <rom index="0" zip="prehisle.zip" md5="None">
+    <rom index="0" zip="gensitou.zip|prehisle.zip" md5="None">
         <!-- maincpu - starts at 0x0 -->
         <interleave output="16">
-            <part name="gt-e2.2h" crc="7083245a" map="01"/>
-            <part name="gt-e3.3h" crc="6d8cdf58" map="10"/>
+            <part name="gt-j2.2h" crc="a2da0b6b" map="01"/>
+            <part name="gt-j3.3h" crc="c1a0ae8e" map="10"/>
         </interleave>
 
         <!-- fgtiles - starts at 0x40000 -->

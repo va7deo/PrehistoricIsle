@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXX X        XXX XXXXXXXX    XXXXXX                       
+// X  XXXXXXXX         XXX XXXXXXXX      XXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -245,9 +245,7 @@ localparam CONF_STR = {
     "-;",
     "P3,PCB & Debug Settings;",
     "P3-;",
-    "P3OB,Turbo (Legion Sets),Off,On;",    
     "P3o3,Service Menu,Off,On;",
-    "P3o4,Debug Menu,Off,On;",
     "P3-;",
     "P3o5,Text Layer,On,Off;",
     "P3o6,Foreground Layer,On,Off;",
@@ -258,7 +256,7 @@ localparam CONF_STR = {
     "-;",
     "R0,Reset;",
     "J1,Button 1,Button 2,Button 3,Start,Coin,Pause;",
-    "jn,A,B,X,R,L,Start;",           // name mapping
+    "jn,A,B,X,R,L,Start;", // name mapping
     "V,v",`BUILD_DATE
 };
 
@@ -284,7 +282,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
     .gamma_bus(gamma_bus),
     .direct_video(direct_video),
     .video_rotated(video_rotated),
-    
+
     .ioctl_download(ioctl_download),
     .ioctl_upload(ioctl_upload),
     .ioctl_wr(ioctl_wr),
@@ -331,14 +329,14 @@ end
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
-reg [15:0] p1 ;
-reg [15:0] p2 ;
-reg [15:0] dsw1 ;
-reg [15:0] dsw2 ;
-reg [15:0] coin ;
-reg [15:0] sys ;
+reg [15:0] p1;   // PORT_START("P1")
+reg [15:0] p2;   // PORT_START("P2")
+reg [15:0] dsw1; // PORT_START("DSW0")
+reg [15:0] dsw2; // PORT_START("DSW1")
+reg [15:0] coin; // PORT_START("COIN")
+reg [15:0] sys;
 
-always @ (posedge clk_sys ) begin 
+always @ (posedge clk_sys ) begin
     p1 <= 16'hffff;
     p1[7:0] <= ~{ start1, p1_buttons[2:0], p1_right, p1_left ,p1_down, p1_up};
      
@@ -347,39 +345,39 @@ always @ (posedge clk_sys ) begin
     
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 14'hffff, coin_b, coin_a };
+    coin <=  { 14'hffff, coin_b, coin_a }; // key_tilt, key_test, key_service
 end
 
-wire        p1_right   = joy0[0] | key_p1_right;
-wire        p1_left    = joy0[1] | key_p1_left;
-wire        p1_down    = joy0[2] | key_p1_down;
-wire        p1_up      = joy0[3] | key_p1_up;
-wire [3:0]  p1_buttons = joy0[7:4] | {key_p1_d, key_p1_c, key_p1_b, key_p1_a};
+wire        p1_right   = joy0[0]   | key_p1_right;
+wire        p1_left    = joy0[1]   | key_p1_left;
+wire        p1_down    = joy0[2]   | key_p1_down;
+wire        p1_up      = joy0[3]   | key_p1_up;
+wire [2:0]  p1_buttons = joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-wire        p2_right   = joy1[0] | key_p2_right;
-wire        p2_left    = joy1[1] | key_p2_left;
-wire        p2_down    = joy1[2] | key_p2_down;
-wire        p2_up      = joy1[3] | key_p2_up | status[36];
-wire [3:0]  p2_buttons = joy1[7:4] | {key_p2_d, key_p2_c, key_p2_b | status[36], key_p2_a | status[36]};
+wire        p2_right   = joy1[0]   | key_p2_right;
+wire        p2_left    = joy1[1]   | key_p2_left;
+wire        p2_down    = joy1[2]   | key_p2_down;
+wire        p2_up      = joy1[3]   | key_p2_up;
+wire [2:0]  p2_buttons = joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
 
-wire        start1  = joy0[8]  | joy1[8]  | key_start_1p;
-wire        start2  = joy0[9]  | joy1[9]  | key_start_2p | status[11];
-wire        coin_a  = joy0[10] | joy1[10] | key_coin_a;
-wire        coin_b  = joy0[11] | joy1[11] | key_coin_b;
-wire        b_pause = joy0[12] | key_pause ;
+wire        start1     = joy0[7]  | joy1[7]  | key_start_1p;
+wire        start2     = joy0[8]  | joy1[8]  | key_start_2p;
+wire        coin_a     = joy0[9]  | joy1[9]  | key_coin_a;
+wire        coin_b     = joy0[10] | joy1[10] | key_coin_b;
+wire        b_pause    = joy0[11] | key_pause ;
 
 // Keyboard handler
 
 wire key_start_1p, key_start_2p, key_coin_a, key_coin_b;
-wire key_test, key_reset, key_service, key_pause;
+wire key_test, key_reset, key_service, key_pause, key_tilt;
 wire key_txt_enable, key_fg_enable, key_bg_enable, key_spr_enable;
 
-wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
-wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c, key_p2_d;
+wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c;
+wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c;
 
 wire pressed = ps2_key[9];
 
-always @(posedge clk_sys) begin 
+always @(posedge clk_sys) begin
     reg old_state;
 
     old_state <= ps2_key[10];
@@ -392,6 +390,7 @@ always @(posedge clk_sys) begin
             'h006: key_test       <= key_test ^ pressed; // f2
             'h004: key_reset      <= pressed; // f3
             'h046: key_service    <= pressed; // 9
+            'h02c: key_tilt       <= pressed; // t
             'h04D: key_pause      <= pressed; // p
 
             'hX75: key_p1_up      <= pressed; // up
@@ -401,7 +400,6 @@ always @(posedge clk_sys) begin
             'h014: key_p1_a       <= pressed; // lctrl
             'h011: key_p1_b       <= pressed; // lalt
             'h029: key_p1_c       <= pressed; // spacebar
-            'h012: key_p1_d       <= pressed; // lshift
 
             'h02d: key_p2_up      <= pressed; // r
             'h02b: key_p2_down    <= pressed; // f
@@ -410,7 +408,6 @@ always @(posedge clk_sys) begin
             'h01c: key_p2_a       <= pressed; // a
             'h01b: key_p2_b       <= pressed; // s
             'h015: key_p2_c       <= pressed; // q
-            'h01d: key_p2_d       <= pressed; // w
 
             'h083: key_txt_enable <= key_txt_enable ^ pressed; // f7
             'h00A: key_bg_enable  <= key_bg_enable  ^ pressed; // f8
@@ -435,7 +432,7 @@ pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
-    .outclk_0(clk_sys),    
+    .outclk_0(clk_sys),
     .outclk_1(clk_72M),
     .locked(pll_locked)
 );
@@ -479,7 +476,7 @@ always @ (posedge clk_sys) begin
 end
 
 wire    reset;
-assign  reset = RESET | ioctl_download | key_reset | status[0] ; 
+assign  reset = RESET | ioctl_download | key_reset | status[0] ;
 
 //////////////////////////////////////////////////////////////////
 wire rotate_ccw = 1;
@@ -500,8 +497,8 @@ wire vsync;
 
 wire hbl_delay, vbl_delay;
 
-assign hbl_delay = hbl ;
-assign vbl_delay = vbl ;
+assign hbl_delay = hbl;
+assign vbl_delay = vbl;
 
 video_timing video_timing (
     .clk(clk_6M),
@@ -572,7 +569,7 @@ arcade_video #(256,24) arcade_video
 
 // SET PAL and NTSC TIMING
 `ifdef MISTER_ENABLE_YC
-    assign CHROMA_PHASE_INC = PALFLAG ? 40'd67705769163: 40'd54663218274 ;
+    assign CHROMA_PHASE_INC = PALFLAG ? 40'd67705769163: 40'd54663218274;
     assign YC_EN =  status[22];
     assign PALFLAG = status[7];
 `endif
@@ -585,8 +582,8 @@ screen_rotate screen_rotate (.*);
 //    .q_a ( bg_tilemap_dout[7:0] )
 
 
-reg [3:0] txt_pix ;
-reg [3:0] bg_pix ;
+reg [3:0] txt_pix;
+reg [3:0] bg_pix;
 
 reg [7:0] hc_del;
 
@@ -597,8 +594,8 @@ wire [11:0] pal3 [0:15] = '{12'h541,12'h975,12'h482,12'h251,12'h121,12'h6ed,12'h
 
 reg [4:0] tile_state;
 reg [8:0] x;
-wire [8:0] tx_x = x ;
-wire [8:0] tx_y = vc ;
+wire [8:0] tx_x = x;
+wire [8:0] tx_y = vc;
 
 reg [2:0] pri_buf[0:255];
 
@@ -607,15 +604,15 @@ reg [31:0] pix_data;
 //reg txt_rom_cs;
 //wire txt_rom_valid;
 
-wire [13:0] fg_x = x  + fg_scroll_x ;
-wire  [8:0] fg_y = vc + fg_scroll_y ;
+wire [13:0] fg_x = x  + fg_scroll_x;
+wire  [8:0] fg_y = vc + fg_scroll_y;
 
-wire [13:0] bg_x = x  + bg_scroll_x ;
-wire  [8:0] bg_y = vc + bg_scroll_y ;
+wire [13:0] bg_x = x  + bg_scroll_x;
+wire  [8:0] bg_y = vc + bg_scroll_y;
 
 wire  [9:0] txt_tile = { vc[7:3], hc[7:3] };
-wire [14:0] fg_tile  = { fg_x[10:4], fg_y[8:4] } ; 
-wire [14:0] bg_tile  = { bg_x[13:4], bg_y[8:4] } ; 
+wire [14:0] fg_tile  = { fg_x[10:4], fg_y[8:4] };
+wire [14:0] bg_tile  = { bg_x[13:4], bg_y[8:4] };
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
@@ -627,37 +624,37 @@ always @ (posedge clk_sys) begin
             x <= 0;
         end else if ( tile_state == 1) begin
             line_buf_tx_w <= 0;
-            txt_ram_addr <= { tx_y[7:3], tx_x[7:3] }; 
+            txt_ram_addr <= { tx_y[7:3], tx_x[7:3] };
             tile_state <= 2;
         end else if ( tile_state == 2) begin  
-            // address is valid - need more more cycle to read 
+            // address is valid - need more more cycle to read
             tile_state <= 3;
         end else if ( tile_state == 3) begin  
-            txt_rom_addr <= { txt_ram_dout[11:0], vc[2:0] } ;
+            txt_rom_addr <= { txt_ram_dout[11:0], vc[2:0] };
             txt_rom_cs <= 1;
             tile_state <= 4;
-        end else if ( tile_state == 4) begin             
-            // address is valid - need more more cycle to read 
+        end else if ( tile_state == 4) begin
+            // address is valid - need more more cycle to read
             tile_state <= 5;
-        end else if ( tile_state == 5) begin              
+        end else if ( tile_state == 5) begin
             if ( txt_rom_valid == 1 ) begin
                 txt_rom_cs <= 0;
                 pix_data <= txt_rom_data;
-                tile_state <= 6 ;
+                tile_state <= 6;
             end
-        end else if ( tile_state == 6) begin 
+        end else if ( tile_state == 6) begin
             pri_buf[x] <= 1;
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_tx_w <= 1;
             case ( x[2:0] )
-                0: line_buf_din <= { txt_ram_dout[15:12], pix_data[31:28] }; 
-                1: line_buf_din <= { txt_ram_dout[15:12], pix_data[27:24] }; 
-                2: line_buf_din <= { txt_ram_dout[15:12], pix_data[23:20] }; 
-                3: line_buf_din <= { txt_ram_dout[15:12], pix_data[19:16] }; 
-                4: line_buf_din <= { txt_ram_dout[15:12], pix_data[15:12] }; 
-                5: line_buf_din <= { txt_ram_dout[15:12], pix_data[11:8] }; 
-                6: line_buf_din <= { txt_ram_dout[15:12], pix_data[7:4] }; 
-                7: line_buf_din <= { txt_ram_dout[15:12], pix_data[3:0] }; 
+                0: line_buf_din <= { txt_ram_dout[15:12], pix_data[31:28] };
+                1: line_buf_din <= { txt_ram_dout[15:12], pix_data[27:24] };
+                2: line_buf_din <= { txt_ram_dout[15:12], pix_data[23:20] };
+                3: line_buf_din <= { txt_ram_dout[15:12], pix_data[19:16] };
+                4: line_buf_din <= { txt_ram_dout[15:12], pix_data[15:12] };
+                5: line_buf_din <= { txt_ram_dout[15:12], pix_data[11:8] };
+                6: line_buf_din <= { txt_ram_dout[15:12], pix_data[7:4] };
+                7: line_buf_din <= { txt_ram_dout[15:12], pix_data[3:0] };
             endcase
             if ( x < 255 ) begin
                 if ( x[2:0] == 3'b111 ) begin
@@ -667,44 +664,44 @@ always @ (posedge clk_sys) begin
             end else begin
                 tile_state <= 7;
             end
-        end else if ( tile_state == 7) begin             
+        end else if ( tile_state == 7) begin
             line_buf_tx_w <= 0;
             x <= 0;
             tile_state <= 11;
 
         // fg
-        end else if ( tile_state == 11) begin             
+        end else if ( tile_state == 11) begin
             line_buf_fg_w <= 0;
-            fg_ram_addr <= fg_tile ; 
+            fg_ram_addr <= fg_tile ;
             tile_state <= 12;
-        end else if ( tile_state == 12) begin  
-            // address is valid - need more more cycle to read 
+        end else if ( tile_state == 12) begin
+            // address is valid - need more more cycle to read
             tile_state <= 13;
-        end else if ( tile_state == 13) begin  
-            fg_rom_addr <= { fg_ram_dout[10:0], fg_x[3], { 4 { fg_ram_dout[11] } } ^ fg_y[3:0] } ;
+        end else if ( tile_state == 13) begin
+            fg_rom_addr <= { fg_ram_dout[10:0], fg_x[3], { 4 { fg_ram_dout[11] } } ^ fg_y[3:0] };
             fg_rom_cs <= 1;
             tile_state <= 14;
         end else if ( tile_state == 14) begin  
-            // address is valid - need more more cycle to read 
+            // address is valid - need more more cycle to read
             tile_state <= 15;
-        end else if ( tile_state == 15) begin              
+        end else if ( tile_state == 15) begin
             if ( fg_rom_valid == 1 ) begin
                 fg_rom_cs <= 0;
                 pix_data <= fg_rom_data;
                 tile_state <= 16 ;
             end
-        end else if ( tile_state == 16) begin 
-            line_buf_addr_w <= { vc[0], x[8:0] }; 
+        end else if ( tile_state == 16) begin
+            line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_fg_w <= 1;
             case ( fg_x[2:0] ) // case ( x[2:0] )
-                0: line_buf_din <= { fg_ram_dout[15:12], pix_data[31:28] }; 
-                1: line_buf_din <= { fg_ram_dout[15:12], pix_data[27:24] }; 
-                2: line_buf_din <= { fg_ram_dout[15:12], pix_data[23:20] }; 
-                3: line_buf_din <= { fg_ram_dout[15:12], pix_data[19:16] }; 
-                4: line_buf_din <= { fg_ram_dout[15:12], pix_data[15:12] }; 
-                5: line_buf_din <= { fg_ram_dout[15:12], pix_data[11:8] }; 
-                6: line_buf_din <= { fg_ram_dout[15:12], pix_data[7:4] }; 
-                7: line_buf_din <= { fg_ram_dout[15:12], pix_data[3:0] }; 
+                0: line_buf_din <= { fg_ram_dout[15:12], pix_data[31:28] };
+                1: line_buf_din <= { fg_ram_dout[15:12], pix_data[27:24] };
+                2: line_buf_din <= { fg_ram_dout[15:12], pix_data[23:20] };
+                3: line_buf_din <= { fg_ram_dout[15:12], pix_data[19:16] };
+                4: line_buf_din <= { fg_ram_dout[15:12], pix_data[15:12] };
+                5: line_buf_din <= { fg_ram_dout[15:12], pix_data[11:8] };
+                6: line_buf_din <= { fg_ram_dout[15:12], pix_data[7:4] };
+                7: line_buf_din <= { fg_ram_dout[15:12], pix_data[3:0] };
             endcase
             if ( x < 255 ) begin
                 if ( fg_x[2:0] == 3'b111 ) begin // if ( x[2:0] == 3'b111 ) begin
@@ -714,44 +711,44 @@ always @ (posedge clk_sys) begin
             end else begin
                 tile_state <= 17;
             end
-        end else if ( tile_state == 17) begin   
+        end else if ( tile_state == 17) begin
             line_buf_fg_w <= 0;
-            tile_state <= 21;    
-            x <= 0;  
+            tile_state <= 21;
+            x <= 0;
         // bg
 
-        end else if ( tile_state == 21) begin             
+        end else if ( tile_state == 21) begin
             line_buf_bg_w <= 0;
-            tilemap_rom_addr <= bg_tile ; 
+            tilemap_rom_addr <= bg_tile ;
             tile_state <= 22;
-        end else if ( tile_state == 22) begin  
-            // address is valid - need more more cycle to read 
+        end else if ( tile_state == 22) begin
+            // address is valid - need more more cycle to read
             tile_state <= 23;
-        end else if ( tile_state == 23) begin  
-            bg_rom_addr <= { tilemap_rom_data[10:0], tilemap_rom_data[11] ^ bg_x[3], bg_y[3:0] } ;
+        end else if ( tile_state == 23) begin
+            bg_rom_addr <= { tilemap_rom_data[10:0], tilemap_rom_data[11] ^ bg_x[3], bg_y[3:0] };
             bg_rom_cs <= 1;
             tile_state <= 24;
-        end else if ( tile_state == 24) begin  
+        end else if ( tile_state == 24) begin
             // address is valid - need more more cycle to read 
             tile_state <= 25;
-        end else if ( tile_state == 25) begin              
+        end else if ( tile_state == 25) begin
             if ( bg_rom_valid == 1 ) begin
                 bg_rom_cs <= 0;
                 pix_data <= bg_rom_data;
-                tile_state <= 26 ;
+                tile_state <= 26;
             end
-        end else if ( tile_state == 26) begin 
+        end else if ( tile_state == 26) begin
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_bg_w <= 1;
             case ( { 3 { tilemap_rom_data[11] } } ^ bg_x[2:0] ) // case ( x[2:0] )
-                0: line_buf_din <= { tilemap_rom_data[15:12], pix_data[31:28] }; 
-                1: line_buf_din <= { tilemap_rom_data[15:12], pix_data[27:24] }; 
-                2: line_buf_din <= { tilemap_rom_data[15:12], pix_data[23:20] }; 
-                3: line_buf_din <= { tilemap_rom_data[15:12], pix_data[19:16] }; 
-                4: line_buf_din <= { tilemap_rom_data[15:12], pix_data[15:12] }; 
-                5: line_buf_din <= { tilemap_rom_data[15:12], pix_data[11:8] }; 
-                6: line_buf_din <= { tilemap_rom_data[15:12], pix_data[7:4] }; 
-                7: line_buf_din <= { tilemap_rom_data[15:12], pix_data[3:0] }; 
+                0: line_buf_din <= { tilemap_rom_data[15:12], pix_data[31:28] };
+                1: line_buf_din <= { tilemap_rom_data[15:12], pix_data[27:24] };
+                2: line_buf_din <= { tilemap_rom_data[15:12], pix_data[23:20] };
+                3: line_buf_din <= { tilemap_rom_data[15:12], pix_data[19:16] };
+                4: line_buf_din <= { tilemap_rom_data[15:12], pix_data[15:12] };
+                5: line_buf_din <= { tilemap_rom_data[15:12], pix_data[11:8] };
+                6: line_buf_din <= { tilemap_rom_data[15:12], pix_data[7:4] };
+                7: line_buf_din <= { tilemap_rom_data[15:12], pix_data[3:0] };
             endcase
             if ( x < 255 ) begin
                 if ( bg_x[2:0] == 3'b111 ) begin // if ( x[2:0] == 3'b111 ) begin
@@ -761,12 +758,10 @@ always @ (posedge clk_sys) begin
             end else begin
                 tile_state <= 27;
             end
-        end else if ( tile_state == 27) begin   
+        end else if ( tile_state == 27) begin
             line_buf_bg_w <= 0;
-            tile_state <= 0;      
-            
+            tile_state <= 0;
         end
-   
     end
 end
 
@@ -808,25 +803,24 @@ always @ (posedge clk_sys) begin
             if ( clk6_count == 1 ) begin
                 line_buf_addr_r <= { ~vc[0], hc[8:0] };
             end else if ( clk6_count == 2 ) begin
-                tx <= line_buf_tx_out[7:0] ;
-                fg <= line_buf_fg_out[7:0] ;
-                bg <= line_buf_bg_out[7:0] ;
-            end else if ( clk6_count == 3 ) begin                
-                tile_pal_addr <= 12'd768 + bg ;
-            end else if ( clk6_count == 5 ) begin                
+                tx <= line_buf_tx_out[7:0];
+                fg <= line_buf_fg_out[7:0];
+                bg <= line_buf_bg_out[7:0];
+            end else if ( clk6_count == 3 ) begin
+                tile_pal_addr <= 12'd768 + bg;
+            end else if ( clk6_count == 5 ) begin
                 rgb_bg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-                tile_pal_addr <= 12'd512 + fg ;
-            end else if ( clk6_count == 7 ) begin                
+                tile_pal_addr <= 12'd512 + fg;
+            end else if ( clk6_count == 7 ) begin
                 rgb_fg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-                tile_pal_addr <= tx ;
-            end else if ( clk6_count == 9 ) begin                
+                tile_pal_addr <= tx;
+            end else if ( clk6_count == 9 ) begin
                 rgb_tx <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-            end else if ( clk6_count == 0 ) begin                                
+            end else if ( clk6_count == 0 ) begin
                 rgb <= rgb_bg;
                 if ( fg[3:0] < 15 ) begin
                     rgb <= rgb_fg;
                 end
-                
                 if ( tx[3:0] < 15 ) begin
                     rgb <= rgb_tx;
                 end
@@ -848,10 +842,10 @@ always @ (posedge clk_sys) begin
     end else if ( clk_18M == 1 ) begin
         // tell 68k to wait for valid data. 0=ready 1=wait
         // always ack when it's not program rom
-        m68k_dtack_n <= m68k_rom_cs ? !m68k_rom_valid : 
-                        0; 
+        m68k_dtack_n <= m68k_rom_cs ? !m68k_rom_valid :
+                        0;
 
-        // select cpu data input based on what is active 
+        // select cpu data input based on what is active
         m68k_din <=  m68k_rom_cs  ? m68k_rom_data :
                      m68k_ram_cs  ? m68k_ram_dout :
                      m68k_txt_ram_cs ? m68k_txt_ram_dout :
@@ -864,24 +858,22 @@ always @ (posedge clk_sys) begin
                      input_dsw2_cs ? dsw2 :
                      input_coin_cs ? coin :
                      16'd0;
-                     
-        // write asserted and rising cpu clock
-        if ( m68k_rw == 0 ) begin        
 
+        // write asserted and rising cpu clock
+        if ( m68k_rw == 0 ) begin
             if ( fg_scroll_x_cs == 1 ) begin
                 fg_scroll_x <= m68k_dout;
-            end                     
+            end
             if ( fg_scroll_y_cs == 1 ) begin
                 fg_scroll_y <= m68k_dout;
-            end  
-            
+            end
             if ( bg_scroll_x_cs == 1 ) begin
                 bg_scroll_x <= m68k_dout;
-            end                     
+            end
             if ( bg_scroll_y_cs == 1 ) begin
                 bg_scroll_y <= m68k_dout;
-            end                     
-        end         
+            end
+        end
     end
 end 
 
@@ -965,35 +957,35 @@ reg [15:0] fg_scroll_y;
 reg [7:0]  sound_latch;
 
 // CPU outputs
-wire m68k_rw         ;    // Read = 1, Write = 0
-wire m68k_as_n       ;    // Address strobe
-wire m68k_lds_n      ;    // Lower byte strobe
-wire m68k_uds_n      ;    // Upper byte strobe
-wire m68k_E;         
-wire [2:0] m68k_fc    ;   // Processor state
-wire m68k_reset_n_o  ;    // Reset output signal
-wire m68k_halted_n   ;    // Halt output
+wire m68k_rw;        // Read = 1, Write = 0
+wire m68k_as_n;      // Address strobe
+wire m68k_lds_n;     // Lower byte strobe
+wire m68k_uds_n;     // Upper byte strobe
+wire m68k_E;
+wire [2:0] m68k_fc;  // Processor state
+wire m68k_reset_n_o; // Reset output signal
+wire m68k_halted_n;  // Halt output
 
 // CPU busses
-wire [15:0] m68k_dout       ;
-wire [23:0] m68k_a   /* synthesis keep */       ;
-reg  [15:0] m68k_din        ;   
+wire [15:0] m68k_dout;
+wire [23:0] m68k_a /* synthesis keep */;
+reg  [15:0] m68k_din;
 //assign m68k_a[0] = 1'b0;
 
 // CPU inputs
-reg  m68k_dtack_n ;         // Data transfer ack (always ready)
-reg  m68k_ipl2_n ;
+reg  m68k_dtack_n; // Data transfer ack (always ready)
+reg  m68k_ipl2_n;
 
 wire m68k_vpa_n = ~int_ack;//( m68k_lds_n == 0 && m68k_fc == 3'b111 ); // int ack
 
-reg int_ack ;
+reg int_ack;
 reg [1:0] vbl_sr;
 
 // vblank handling 
 // process interrupt and sprite buffering
 always @ (posedge clk_sys ) begin
     if ( reset == 1 ) begin
-        m68k_ipl2_n <= 1 ;
+        m68k_ipl2_n <= 1;
         int_ack <= 0;
     end else begin
         vbl_sr <= { vbl_sr[0], vbl };
@@ -1008,7 +1000,7 @@ always @ (posedge clk_sys ) begin
             m68k_ipl2_n <= 0;
         end else if ( int_ack == 1 || vbl_sr == 2'b10 ) begin
             // deassert interrupt since 68k ack'ed.
-            m68k_ipl2_n <= 1 ;
+            m68k_ipl2_n <= 1;
         end
     end
 end    
@@ -1053,10 +1045,10 @@ fx68k fx68k (
     .oHALTEDn(m68k_halted_n),
 
     // input
-    .VPAn( m68k_vpa_n ),  
-    .DTACKn( m68k_dtack_n ),     
-    .BERRn(1'b1), 
-    .BRn(1'b1),  
+    .VPAn( m68k_vpa_n ),
+    .DTACKn( m68k_dtack_n ),
+    .BERRn(1'b1),
+    .BRn(1'b1),
     .BGACKn(1'b1),
     
     .IPL0n(1'b1),
@@ -1092,8 +1084,8 @@ T80pa z80 (
     .CLK        ( clk_sys ),
     .CEN_p      ( clk_6M ),
     .CEN_n      ( ~clk_6M ),
-    .WAIT_n     ( z80_wait_n ), 
-    .INT_n      ( z80_irq_n ),  
+    .WAIT_n     ( z80_wait_n ),
+    .INT_n      ( z80_irq_n ),
     .NMI_n      ( 1'b1 ),
     .BUSRQ_n    ( 1'b1 ),
     .RD_n       ( z80_rd_n ),
@@ -1121,29 +1113,29 @@ always @ (posedge clk_sys) begin
         
     end else if ( clk_6M == 1 ) begin
         if ( z80_rom_cs == 1 ) begin
-            z80_din <= z80_rom_data ;
-        end                     
+            z80_din <= z80_rom_data;
+        end
         if ( z80_ram_cs == 1 ) begin
-            z80_din <= z80_ram_data ;
-        end  
+            z80_din <= z80_ram_data;
+        end
 
         if ( z80_latch_cs == 1 ) begin
-            z80_din <= sound_latch ;
-        end  
-        
-        sound_wr <= 0 ;
-        if ( z80_wr_n == 0 ) begin 
-            if ( z80_sound0_cs == 1 || z80_sound1_cs == 1) begin    
+            z80_din <= sound_latch;
+        end
+
+        sound_wr <= 0;
+        if ( z80_wr_n == 0 ) begin
+            if ( z80_sound0_cs == 1 || z80_sound1_cs == 1) begin
                 sound_data  <= z80_dout;
-                sound_addr <= z80_sound1_cs ; 
+                sound_addr <= z80_sound1_cs;
                 sound_wr <= 1;
-            end 
-        end        
+            end
+        end
     end
 end 
 
-reg sound_addr ;
-reg  [7:0] sound_data ;
+reg sound_addr;
+reg  [7:0] sound_data;
 
 // sound ic write enable
 reg sound_wr;
@@ -1153,7 +1145,7 @@ wire opl_irq_n;
 
 reg signed [15:0] sample;
 
-assign AUDIO_S = 1'b1 ;
+assign AUDIO_S = 1'b1;
 
 wire opl_sample_clk;
 
@@ -1176,8 +1168,8 @@ jtopl #(.OPL_TYPE(2)) opl
 
 always @ * begin
     // mix audio
-    AUDIO_L <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
-    AUDIO_R <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
+    AUDIO_L <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1);
+    AUDIO_R <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1);
 end
 
 reg [7:0] dac1;
@@ -1198,23 +1190,23 @@ wire [15:0] m68k_sprite_dout;
 wire [15:0] m68k_pal_dout;
 
 
-// ioctl download addressing    
+// ioctl download addressing
 wire rom_download = ioctl_download && (ioctl_index==0);
 
-wire m68k_ioctl_wr    = rom_download & ioctl_wr & (ioctl_addr >= 24'h000000) & (ioctl_addr < 24'h040000) ;
-wire tilemap_ioctl_wr = rom_download & ioctl_wr & (ioctl_addr >= 24'h0f0000) & (ioctl_addr < 24'h100000) ;
-wire txt_ioctl_wr     = rom_download & ioctl_wr & (ioctl_addr >= 24'h200000) & (ioctl_addr < 24'h208000) ;
-wire z80_ioctl_wr     = rom_download & ioctl_wr & (ioctl_addr >= 24'h0c0000) & (ioctl_addr < 24'h0d0000) ;
-wire upd_ioctl_wr     = rom_download & ioctl_wr & (ioctl_addr >= 24'h0d0000) & (ioctl_addr < 24'h0f0000) ;
+wire m68k_ioctl_wr    = rom_download & ioctl_wr & (ioctl_addr >= 24'h000000) & (ioctl_addr < 24'h040000);
+wire tilemap_ioctl_wr = rom_download & ioctl_wr & (ioctl_addr >= 24'h0f0000) & (ioctl_addr < 24'h100000);
+wire txt_ioctl_wr     = rom_download & ioctl_wr & (ioctl_addr >= 24'h200000) & (ioctl_addr < 24'h208000);
+wire z80_ioctl_wr     = rom_download & ioctl_wr & (ioctl_addr >= 24'h0c0000) & (ioctl_addr < 24'h0d0000);
+wire upd_ioctl_wr     = rom_download & ioctl_wr & (ioctl_addr >= 24'h0d0000) & (ioctl_addr < 24'h0f0000);
 
-// main 68k ram high    
+// main 68k ram high
 dual_port_ram #(.LEN(8192)) ram8kx8_H (
     .clock_a ( clk_18M ),
     .address_a ( m68k_a[13:1] ),
     .wren_a ( !m68k_rw & m68k_ram_cs & !m68k_uds_n ),
     .data_a ( m68k_dout[15:8]  ),
-    .q_a (  m68k_ram_dout[15:8] ) ,
-    
+    .q_a (  m68k_ram_dout[15:8] ),
+
 //    .clock_b (  ),
 //    .address_b (  ),
 //    .wren_b (  ),
@@ -1228,8 +1220,8 @@ dual_port_ram #(.LEN(8192)) ram8kx8_L (
     .address_a ( m68k_a[13:1] ),
     .wren_a ( !m68k_rw & m68k_ram_cs & !m68k_lds_n ),
     .data_a ( m68k_dout[7:0]  ),
-    .q_a ( m68k_ram_dout[7:0] ) ,
-    
+    .q_a ( m68k_ram_dout[7:0] ),
+
 //    .clock_b (  ),
 //    .address_b (  ),
 //    .wren_b (  ),
@@ -1240,7 +1232,7 @@ dual_port_ram #(.LEN(8192)) ram8kx8_L (
 reg  [10:0] sprite_ram_addr;
 wire [15:0] sprite_ram_dout;
 
-    // main 68k sprite ram high  
+// main 68k sprite ram high
 // 2kx16
 dual_port_ram #(.LEN(1024)) sprite_ram_H (
     .clock_a ( clk_18M ),
@@ -1250,35 +1242,34 @@ dual_port_ram #(.LEN(1024)) sprite_ram_H (
     .q_a (  m68k_sprite_dout[15:8] ),
 
     .clock_b ( clk_sys ),
-    .address_b ( sprite_ram_addr ),  
+    .address_b ( sprite_ram_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( sprite_ram_dout[15:8] )
-    
     );
 
-// main 68k sprite ram low     
+// main 68k sprite ram low
 dual_port_ram #(.LEN(1024)) sprite_ram_L (
     .clock_a ( clk_18M ),
     .address_a ( m68k_a[10:1] ),
     .wren_a ( !m68k_rw & m68k_spr_cs & !m68k_lds_n ),
     .data_a ( m68k_dout[7:0]  ),
     .q_a ( m68k_sprite_dout[7:0] ),
-     
+
     .clock_b ( clk_sys ),
-    .address_b ( sprite_ram_addr ),  
+    .address_b ( sprite_ram_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( sprite_ram_dout[7:0] )
     );
 
-   
+
 wire [12:0] fg_ram_addr;
 wire [15:0] fg_ram_dout;
 
 wire [15:0] m68k_fg_ram_dout;
 
-// foreground high   
+// foreground high
 dual_port_ram #(.LEN(8192)) ram_fg_h (
     .clock_a ( clk_18M ),
     .address_a ( m68k_a[13:1] ),
@@ -1287,11 +1278,10 @@ dual_port_ram #(.LEN(8192)) ram_fg_h (
     .q_a ( m68k_fg_ram_dout[15:8] ),
 
     .clock_b ( clk_sys ),
-    .address_b ( fg_ram_addr ),  
+    .address_b ( fg_ram_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( fg_ram_dout[15:8] )
-    
     );
 
 // foreground low
@@ -1303,17 +1293,17 @@ dual_port_ram #(.LEN(8192)) ram_fg_l (
     .q_a ( m68k_fg_ram_dout[7:0] ),
      
     .clock_b ( clk_sys ),
-    .address_b ( fg_ram_addr ),  
+    .address_b ( fg_ram_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( fg_ram_dout[7:0] )
     );
-    
-wire [15:0] m68k_txt_ram_dout ;
+
+wire [15:0] m68k_txt_ram_dout;
 reg  [15:0] txt_ram_dout;
 reg   [9:0] txt_ram_addr;
-    
-// text ram high   
+
+// text ram high
 dual_port_ram #(.LEN(1024)) txt_ram_h (
     .clock_a ( clk_18M ),
     .address_a ( m68k_a[10:1] ),
@@ -1322,7 +1312,7 @@ dual_port_ram #(.LEN(1024)) txt_ram_h (
     .q_a ( m68k_txt_ram_dout[15:8]  ),
 
     .clock_b ( clk_sys ),
-    .address_b ( txt_ram_addr ),  
+    .address_b ( txt_ram_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( txt_ram_dout[15:8] )
@@ -1335,14 +1325,14 @@ dual_port_ram #(.LEN(1024)) txt_ram_l (
     .wren_a ( !m68k_rw & m68k_txt_ram_cs & !m68k_lds_n ),
     .data_a ( m68k_dout[7:0]  ),
     .q_a ( m68k_txt_ram_dout[7:0] ),
-     
+
     .clock_b ( clk_sys ),
-    .address_b ( txt_ram_addr ),  
+    .address_b ( txt_ram_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( txt_ram_dout[7:0] )
-    );   
-    
+    );
+
 reg  [9:0] tile_pal_addr;
 reg [15:0] tile_pal_dout;
     
@@ -1355,7 +1345,7 @@ dual_port_ram #(.LEN(1024)) tile_pal_h (
     .q_a ( m68k_pal_dout[15:8]  ),
 
     .clock_b ( clk_sys ),
-    .address_b ( tile_pal_addr ),  
+    .address_b ( tile_pal_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( tile_pal_dout[15:8] )
@@ -1368,30 +1358,30 @@ dual_port_ram #(.LEN(1024)) tile_pal_l (
     .wren_a ( !m68k_rw & m68k_pal_cs & !m68k_lds_n ),
     .data_a ( m68k_dout[7:0]  ),
     .q_a ( m68k_pal_dout[7:0] ),
-     
+
     .clock_b ( clk_sys ),
-    .address_b ( tile_pal_addr ),  
+    .address_b ( tile_pal_addr ),
     .wren_b ( 1'b0 ),
     .data_b ( ),
     .q_b( tile_pal_dout[7:0] )
-    );    
-    
-//z80 program rom    
+    );
+
+//z80 program rom
 dual_port_ram #(.LEN(65536)) z80_rom (
     .clock_a ( clk_sys ),
     .address_a ( z80_addr[15:0] ),
     .wren_a ( 1'b0 ),
     .data_a ( ),
     .q_a ( z80_rom_data[7:0] ),
-    
+
     .clock_b ( clk_sys ),
     .address_b ( ioctl_addr[15:0] ),
     .wren_b ( z80_ioctl_wr ),
     .data_b ( ioctl_dout  ),
     .q_b( )
     );
-    
-// z80 ram 
+
+// z80 ram
 dual_port_ram #(.LEN(2048)) z80_ram (
     .clock_b ( clk_6M ), 
     .address_b ( z80_addr[10:0] ),
@@ -1399,25 +1389,25 @@ dual_port_ram #(.LEN(2048)) z80_ram (
     .data_b ( z80_dout ),
     .q_b ( z80_ram_data )
     );
-    
+
 reg [16:0] upd_addr ;
 wire [7:0] upd_dout ;
 
-//adpcm sample rom    
+//adpcm sample rom
 dual_port_ram #(.LEN(131072)) upd_rom (
     .clock_a ( clk_sys ),
     .address_a ( upd_addr[16:0] ),
     .wren_a ( 1'b0 ),
     .data_a ( ),
     .q_a ( upd_dout[7:0] ),
-    
+
     .clock_b ( clk_sys ),
     .address_b ( ioctl_addr[16:0] ),
     .wren_b ( upd_ioctl_wr ),
     .data_b ( ioctl_dout  ),
     .q_b( )
     );
-    
+
 reg  [15:0] bg_tilemap_addr ;
 wire [15:0] bg_tilemap_dout ;
 reg  [15:0] bg_download_data;
@@ -1425,7 +1415,8 @@ reg         bg_download_wr;
 
 // The SDRAM controller has a 32-bit interface, so we need to buffer the
 // bytes received from the IOCTL interface in order to write 32-bit words to
-// the SDRAM. 
+// the SDRAM.
+
 download_buffer #(.SIZE(2)) bg_download_buffer
 (
     .clk(clk_sys),
@@ -1439,7 +1430,7 @@ download_buffer #(.SIZE(2)) bg_download_buffer
 wire [15:0] spr_pal_dout ;
 wire [15:0] m68k_spr_pal_dout ;
 
-reg  [8:0]  sprite_buffer_addr;  // 128 sprites
+reg  [8:0]  sprite_buffer_addr; // 128 sprites
 reg  [63:0] sprite_buffer_din;
 wire [63:0] sprite_buffer_dout;
 reg  sprite_buffer_w;
@@ -1450,15 +1441,14 @@ dual_port_ram #(.LEN(512), .DATA_WIDTH(64)) sprite_buffer (
     .wren_a ( 1'b0 ),
     .data_a ( ),
     .q_a ( sprite_buffer_dout ),
-    
+
     .clock_b ( clk_sys ),
     .address_b ( sprite_buffer_addr ),
     .wren_b ( sprite_buffer_w ),
     .data_b ( sprite_buffer_din  ),
     .q_b( )
-
     );
-    
+
 reg          line_buf_tx_w;
 reg          line_buf_fg_w;
 reg          line_buf_bg_w;
@@ -1466,11 +1456,11 @@ reg   [9:0]  line_buf_addr_w;
 reg   [7:0]  line_buf_din;
 wire  [7:0]  line_buf_dout;
 
-reg   [9:0]  line_buf_addr_r ; 
+reg   [9:0]  line_buf_addr_r;
 wire  [7:0]  line_buf_tx_out;
 wire  [7:0]  line_buf_fg_out;
 wire  [7:0]  line_buf_bg_out;
-    
+
 // two line buffer for sprite rendering
 dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_tx (
     .clock_a ( clk_sys ),
@@ -1480,12 +1470,12 @@ dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_tx (
     .q_a ( line_buf_dout ),
 
     .clock_b ( clk_sys ),
-    .address_b ( line_buf_addr_r ),  
+    .address_b ( line_buf_addr_r ),
     .wren_b ( 0 ),
 //    .data_b ( ),
     .q_b ( line_buf_tx_out )
-    );    
-    
+    );
+
 dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_fg (
     .clock_a ( clk_sys ),
     .address_a ( line_buf_addr_w ),
@@ -1494,11 +1484,11 @@ dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_fg (
     .q_a ( line_buf_dout ),
 
     .clock_b ( clk_sys ),
-    .address_b ( line_buf_addr_r ),  
+    .address_b ( line_buf_addr_r ),
     .wren_b ( 0 ),
 //    .data_b ( ),
     .q_b ( line_buf_fg_out )
-    );    
+    );
 
 dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_bg (
     .clock_a ( clk_sys ),
@@ -1508,11 +1498,11 @@ dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_bg (
     .q_a ( line_buf_dout ),
 
     .clock_b ( clk_sys ),
-    .address_b ( line_buf_addr_r ),  
+    .address_b ( line_buf_addr_r ),
     .wren_b ( 0 ),
 //    .data_b ( ),
     .q_b ( line_buf_bg_out )
-    );   
+    );
 
 reg  [11:0] gfx_txt_addr;
 wire  [7:0] gfx_txt_dout;
@@ -1521,7 +1511,7 @@ reg  [11:0] gfx_txt_attr_addr;
 wire  [7:0] gfx_txt_attr_dout;
 
 wire [15:0] m68k_txt_attr_ram_dout;
-   
+
 wire [15:0] m68k_rom_data;
 wire m68k_rom_valid;
 
@@ -1555,13 +1545,13 @@ dual_port_ram #(.LEN(131072)) m68k_rom_h (
     .wren_a ( 1'b0 ),
     .data_a ( ),
     .q_a ( m68k_rom_data[15:8] ),
-    
+
     .clock_b ( clk_sys ),
     .address_b ( ioctl_addr[17:1] ),
     .wren_b ( m68k_ioctl_wr & ~ioctl_addr[0]),
     .data_b ( ioctl_dout  ),
     .q_b( )
-    );   
+    );
 
 dual_port_ram #(.LEN(131072)) m68k_rom_l (
     .clock_a ( clk_18M ),
@@ -1569,13 +1559,13 @@ dual_port_ram #(.LEN(131072)) m68k_rom_l (
     .wren_a ( 1'b0 ),
     .data_a ( ),
     .q_a ( m68k_rom_data[7:0] ),
-    
+
     .clock_b ( clk_sys ),
     .address_b ( ioctl_addr[17:1] ),
     .wren_b ( m68k_ioctl_wr & ioctl_addr[0] ),
     .data_b ( ioctl_dout  ),
     .q_b( )
-    );   
+    );
 
 dual_port_ram #(.LEN(32768)) tilemap_rom_h (
     .clock_a ( clk_sys ),
@@ -1583,13 +1573,13 @@ dual_port_ram #(.LEN(32768)) tilemap_rom_h (
     .wren_a ( 1'b0 ),
     .data_a ( ),
     .q_a ( tilemap_rom_data[15:8] ),
-    
+
     .clock_b ( clk_sys ),
     .address_b ( ioctl_addr[15:1] ),
     .wren_b ( tilemap_ioctl_wr & ~ioctl_addr[0]),
     .data_b ( ioctl_dout  ),
     .q_b( )
-    );   
+    );
 
 reg [14:0] tilemap_rom_addr;
 reg [15:0] tilemap_rom_data;
@@ -1600,14 +1590,14 @@ dual_port_ram #(.LEN(32768)) tilemap_rom_l (
     .wren_a ( 1'b0 ),
     .data_a ( ),
     .q_a ( tilemap_rom_data[7:0] ),
-    
+
     .clock_b ( clk_sys ),
     .address_b ( ioctl_addr[15:1] ),
     .wren_b ( tilemap_ioctl_wr & ioctl_addr[0] ),
     .data_b ( ioctl_dout  ),
     .q_b( )
-    );   
-    
+    );
+
 rom_controller rom_controller 
 (
     .reset(reset),
@@ -1642,20 +1632,20 @@ rom_controller rom_controller
     .bg_rom_addr(bg_rom_addr),
     .bg_rom_data(bg_rom_data),
     .bg_rom_data_valid(bg_rom_valid),
-    
+
     // text ROM interface
     .text_rom_cs(txt_rom_cs),
     .text_rom_oe(1),
     .text_rom_addr(txt_rom_addr),
     .text_rom_data(txt_rom_data),
-    .text_rom_data_valid(txt_rom_valid),       
-    
+    .text_rom_data_valid(txt_rom_valid),
+
     // sound ROM #1 interface
 //    .sound_rom_cs(z80_rom_cs),
 //    .sound_rom_oe(1),
 //    .sound_rom_addr(z80_addr),
 //    .sound_rom_data(z80_rom_data),
-//    .sound_rom_data_valid(z80_rom_valid),    
+//    .sound_rom_data_valid(z80_rom_valid),
 
     // IOCTL interface
     .ioctl_addr(ioctl_addr),
@@ -1674,7 +1664,7 @@ rom_controller rom_controller
     .sdram_q(sdram_q)
   );
 
-//    
+
 reg  [22:0] sdram_addr;
 reg  [31:0] sdram_data;
 reg         sdram_we;
@@ -1694,7 +1684,7 @@ sdram #(.CLK_FREQ( (CLKSYS+0.0))) sdram
   .data(sdram_data),
   .we(sdram_we),
   .req(sdram_req),
-  
+
   .ack(sdram_ack),
   .valid(sdram_valid),
   .q(sdram_q),
@@ -1710,6 +1700,6 @@ sdram #(.CLK_FREQ( (CLKSYS+0.0))) sdram
   .sdram_we_n(SDRAM_nWE),
   .sdram_dqml(SDRAM_DQML),
   .sdram_dqmh(SDRAM_DQMH)
-);    
-    
+);
+
 endmodule

@@ -68,43 +68,43 @@ endfunction
 
 always @ (*) begin
 
-//	map(0x000000, 0x03ffff).rom();
+// map(0x000000, 0x03ffff).rom();
     m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
-//	map(0x070000, 0x073fff).ram();
-    m68k_ram_cs      <= m68k_cs( 24'h070000, 24'h073fff ) ; 
-//	map(0x090000, 0x0907ff).ram().w(FUNC(prehisle_state::tx_vram_w)).share("tx_vram");
+// map(0x070000, 0x073fff).ram();
+    m68k_ram_cs      <= m68k_cs( 24'h070000, 24'h073fff ) ;
+// map(0x090000, 0x0907ff).ram().w(FUNC(prehisle_state::tx_vram_w)).share("tx_vram");
     m68k_txt_ram_cs  <= m68k_cs( 24'h090000, 24'h0907ff ) ;
-//	map(0x0a0000, 0x0a07ff).ram().share("spriteram");
+// map(0x0a0000, 0x0a07ff).ram().share("spriteram");
     m68k_spr_cs      <= m68k_cs( 24'h0a0000, 24'h0a07ff ) ;
-//	map(0x0b0000, 0x0b3fff).ram().w(FUNC(prehisle_state::fg_vram_w)).share("fg_vram");
-    m68k_fg_ram_cs   <= m68k_cs( 24'h0b0000, 24'h0b3fff ) ; 
-//	map(0x0d0000, 0x0d07ff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");
+// map(0x0b0000, 0x0b3fff).ram().w(FUNC(prehisle_state::fg_vram_w)).share("fg_vram");
+    m68k_fg_ram_cs   <= m68k_cs( 24'h0b0000, 24'h0b3fff ) ;
+// map(0x0d0000, 0x0d07ff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");
     m68k_pal_cs      <= m68k_cs( 24'h0d0000, 24'h0d07ff ) ;
-//	map(0x0e0010, 0x0e0011).portr("P2");                     // Player 2
-    input_p2_cs      <= m68k_cs( 24'h0e0010, 24'h0e0011 ) ; 
+// map(0x0e0010, 0x0e0011).portr("P2");                     // Player 2
+    input_p2_cs      <= m68k_cs( 24'h0e0010, 24'h0e0011 ) ;
 
-//	map(0x0e0020, 0x0e0021).portr("COIN");                   // Coins, Tilt, Service
-    input_coin_cs    <= m68k_cs( 24'h0e0020, 24'h0e0021 ) ; 
+// map(0x0e0020, 0x0e0021).portr("COIN");                   // Coins, Tilt, Service
+    input_coin_cs    <= m68k_cs( 24'h0e0020, 24'h0e0021 ) ;
     
-//	map(0x0e0041, 0x0e0041).lr8(NAME([this] () -> u8 { return m_io_p1->read() ^ m_invert_controls; })); // Player 1
-    input_p1_cs      <= m68k_cs( 24'h0e0041, 24'h0e0041 ) ; 
-//	map(0x0e0042, 0x0e0043).portr("DSW0");                   // DIPs
-    input_dsw1_cs    <= m68k_cs( 24'h0e0042, 24'h0e0043 ) ; 
-//	map(0x0e0044, 0x0e0045).portr("DSW1");                   // DIPs + VBLANK
-    input_dsw2_cs    <= m68k_cs( 24'h0e0044, 24'h0e0045 ) ; 
+// map(0x0e0041, 0x0e0041).lr8(NAME([this] () -> u8 { return m_io_p1->read() ^ m_invert_controls; })); // Player 1
+    input_p1_cs      <= m68k_cs( 24'h0e0041, 24'h0e0041 ) ;
+// map(0x0e0042, 0x0e0043).portr("DSW0");                   // DIPs
+    input_dsw1_cs    <= m68k_cs( 24'h0e0042, 24'h0e0043 ) ;
+// map(0x0e0044, 0x0e0045).portr("DSW1");                   // DIPs + VBLANK
+    input_dsw2_cs    <= m68k_cs( 24'h0e0044, 24'h0e0045 ) ;
 
-//	map(0x0f0000, 0x0f0001).w(FUNC(prehisle_state::fg_scrolly_w));
-    fg_scroll_y_cs   <= m68k_cs( 24'h0f0000, 24'h0f0001 ) ; 
-//	map(0x0f0010, 0x0f0011).w(FUNC(prehisle_state::fg_scrollx_w));
-    fg_scroll_x_cs   <= m68k_cs( 24'h0f0010, 24'h0f0011 ) ; 
+// map(0x0f0000, 0x0f0001).w(FUNC(prehisle_state::fg_scrolly_w));
+    fg_scroll_y_cs   <= m68k_cs( 24'h0f0000, 24'h0f0001 ) ;
+// map(0x0f0010, 0x0f0011).w(FUNC(prehisle_state::fg_scrollx_w));
+    fg_scroll_x_cs   <= m68k_cs( 24'h0f0010, 24'h0f0011 ) ;
 
-//	map(0x0f0020, 0x0f0021).w(FUNC(prehisle_state::bg_scrolly_w));
-    bg_scroll_y_cs   <= m68k_cs( 24'h0f0020, 24'h0f0021 ) ; 
-//	map(0x0f0030, 0x0f0031).w(FUNC(prehisle_state::bg_scrollx_w));
-    bg_scroll_x_cs   <= m68k_cs( 24'h0f0030, 24'h0f0031 ) ; 
+// map(0x0f0020, 0x0f0021).w(FUNC(prehisle_state::bg_scrolly_w));
+    bg_scroll_y_cs   <= m68k_cs( 24'h0f0020, 24'h0f0021 ) ;
+// map(0x0f0030, 0x0f0031).w(FUNC(prehisle_state::bg_scrollx_w));
+    bg_scroll_x_cs   <= m68k_cs( 24'h0f0030, 24'h0f0031 ) ;
 
-//	map(0x0f0070, 0x0f0071).w(FUNC(prehisle_state::soundcmd_w));
-    sound_latch_cs   <= m68k_cs( 24'h0f0070, 24'h0f0070 ) ; 
+// map(0x0f0070, 0x0f0071).w(FUNC(prehisle_state::soundcmd_w));
+    sound_latch_cs   <= m68k_cs( 24'h0f0070, 24'h0f0070 ) ;
 
     z80_rom_cs       <= ( MREQ_n == 0 && z80_addr[15:0] < 16'hf000 );
     z80_ram_cs       <= ( MREQ_n == 0 && z80_addr[15:0] >= 16'hf000 && z80_addr[15:0] < 16'hf800 );
@@ -116,19 +116,20 @@ always @ (*) begin
 end
 
 
-//	map(0x0f0046, 0x0f0047).lw16(NAME([this] (u16 data) { m_invert_controls = data ? 0xff : 0x00; }));
-//	map(0x0f0050, 0x0f0051).lw16(NAME([this] (u16 data) { machine().bookkeeping().coin_counter_w(0, data & 1); }));
-//	map(0x0f0052, 0x0f0053).lw16(NAME([this] (u16 data) { machine().bookkeeping().coin_counter_w(1, data & 1); }));
-//	map(0x0f0060, 0x0f0061).lw16(NAME([this] (u16 data) { flip_screen_set(data & 0x01); }));
+// map(0x0f0046, 0x0f0047).lw16(NAME([this] (u16 data) { m_invert_controls = data ? 0xff : 0x00; }));
+// map(0x0f0050, 0x0f0051).lw16(NAME([this] (u16 data) { machine().bookkeeping().coin_counter_w(0, data & 1); }));
+// map(0x0f0052, 0x0f0053).lw16(NAME([this] (u16 data) { machine().bookkeeping().coin_counter_w(1, data & 1); }));
+// map(0x0f0060, 0x0f0061).lw16(NAME([this] (u16 data) { flip_screen_set(data & 0x01); }));
     
-//	map(0x0000, 0xefff).rom();
-//	map(0xf000, 0xf7ff).ram();
-//	map(0xf800, 0xf800).r(m_soundlatch, FUNC(generic_latch_8_device::read));
-//	map(0xf800, 0xf800).nopw();    // ???    
+// map(0x0000, 0xefff).rom();
+// map(0xf000, 0xf7ff).ram();
+// map(0xf800, 0xf800).r(m_soundlatch, FUNC(generic_latch_8_device::read));
+// map(0xf800, 0xf800).nopw();    // ???    
 
-//	map.global_mask(0xff);
-//	map(0x00, 0x00).rw("ymsnd", FUNC(ym3812_device::status_r), FUNC(ym3812_device::address_w));
-//	map(0x20, 0x20).w("ymsnd", FUNC(ym3812_device::data_w));
-//	map(0x40, 0x40).w(FUNC(prehisle_state::upd_port_w));
-//	map(0x80, 0x80).lw8(NAME([this] (u8 data) { m_upd7759->reset_w(BIT(data, 7)); }));
+// map.global_mask(0xff);
+// map(0x00, 0x00).rw("ymsnd", FUNC(ym3812_device::status_r), FUNC(ym3812_device::address_w));
+// map(0x20, 0x20).w("ymsnd", FUNC(ym3812_device::data_w));
+// map(0x40, 0x40).w(FUNC(prehisle_state::upd_port_w));
+// map(0x80, 0x80).lw8(NAME([this] (u8 data) { m_upd7759->reset_w(BIT(data, 7)); }));
+
 endmodule
