@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXXX         XXX XXXXXXXX      XXXX                       
+// X  XXXXXXXX         XXX XXXXXXXX     XXXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -245,7 +245,7 @@ localparam CONF_STR = {
     "-;",
     "P3,PCB & Debug Settings;",
     "P3-;",
-    "P3o3,Service Menu,Off,On;",
+    "P3o4,Service Menu,Off,On;",
     "P3-;",
     "P3o5,Text Layer,On,Off;",
     "P3o6,Foreground Layer,On,Off;",
@@ -334,18 +334,18 @@ reg [15:0] p2;   // PORT_START("P2")
 reg [15:0] dsw1; // PORT_START("DSW0")
 reg [15:0] dsw2; // PORT_START("DSW1")
 reg [15:0] coin; // PORT_START("COIN")
-reg [15:0] sys;
+reg p1_invert;
 
 always @ (posedge clk_sys ) begin
     p1 <= 16'hffff;
-    p1[7:0] <= ~{ start1, p1_buttons[2:0], p1_right, p1_left ,p1_down, p1_up};
-     
+    p1[7:0] <= { 8 {p1_invert} } ^ { start1, p1_buttons[2:0], p1_right, p1_left , p1_down, p1_up};
+
     p2 <= 16'hffff;
-    p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left ,p2_down, p2_up};
-    
+    p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left , p2_down, p2_up};
+
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 14'hffff, coin_b, coin_a }; // key_tilt, key_test, key_service
+    coin <=  { 11'h7ff, key_tilt, key_test | status[36], key_service, coin_b, coin_a };
 end
 
 wire        p1_right   = joy0[0]   | key_p1_right;
@@ -360,11 +360,11 @@ wire        p2_down    = joy1[2]   | key_p2_down;
 wire        p2_up      = joy1[3]   | key_p2_up;
 wire [2:0]  p2_buttons = joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
 
-wire        start1     = joy0[7]  | joy1[7]  | key_start_1p;
-wire        start2     = joy0[8]  | joy1[8]  | key_start_2p;
-wire        coin_a     = joy0[9]  | joy1[9]  | key_coin_a;
-wire        coin_b     = joy0[10] | joy1[10] | key_coin_b;
-wire        b_pause    = joy0[11] | key_pause ;
+wire        start1     = joy0[7]   | joy1[7]    | key_start_1p;
+wire        start2     = joy0[8]   | joy1[8]    | key_start_2p;
+wire        coin_a     = joy0[9]   | joy1[9]    | key_coin_a;
+wire        coin_b     = joy0[10]  | joy1[10]   | key_coin_b;
+wire        b_pause    = joy0[11]  | key_pause;
 
 // Keyboard handler
 
