@@ -22,7 +22,7 @@
         <dip name="Allow Continue" bits="14" ids="No,Yes"/>
     </switches>
 
-    <buttons names="B1,B2,B3,Start,Coin,Pause" default="A,B,Y,L,R,Start"/>
+    <buttons names="Shot,Option,-,Start,Coin,Pause" default="A,B,Y,L,R,Start"/>
 
     <rom index="0" zip="prehisle.zip" md5="None">
         <!-- maincpu - starts at 0x0 256K -->
@@ -31,29 +31,27 @@
             <part name="gt-e3.3h" crc="6d8cdf58" map="10"/>
         </interleave>
 
-        <!-- fgtiles - starts at 0x040000 256K -->
+        <!-- fgtiles - starts at 0x40000 256K -->
         <part name="pi8916.h16" crc="7cffe0f6"/>
-        
-        <!-- bgtiles - starts at 0x080000 256K -->
+
+        <!-- bgtiles - starts at 0x80000 256K -->
         <part name="pi8914.b14" crc="207d6187"/>
 
-        <!-- audiocpu - starts at 0x0c0000 64K -->
+        <!-- audiocpu - starts at 0xc0000 64K -->
         <part name="gt1.1" crc="80a4c093"/>
 
-        <!-- upd - starts at 0x0d0000 128K -->  
+        <!-- upd - starts at 0xd0000 128K -->
         <part name="gt4.4" crc="85dfb9ec"/>
 
-        <!-- bgtilemap - starts at 0x0f0000 64K -->
+        <!-- bgtilemap - starts at 0xf0000 64K -->
         <part name="gt11.11" crc="b4f0fcf0"/>
 
         <!-- sprites - starts at 0x100000 1M -->
         <part name="pi8910.k14" crc="5a101b0b"/>
         <part name="gt5.5" crc="3d3ab273"/>
-        
-        <part repeat="0x060000">ff</part>
+        <part repeat="0x60000"> FF</part>
 
         <!-- chars - starts at 0x200000 32K -->
         <part name="gt15.b15" crc="ac652412"/>
-
     </rom>
 </misterromdescription>
