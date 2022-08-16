@@ -87,7 +87,7 @@ always @ (*) begin
     input_coin_cs    <= m68k_cs( 24'h0e0020, 24'h0e0021 ) ; 
     
 //	map(0x0e0041, 0x0e0041).lr8(NAME([this] () -> u8 { return m_io_p1->read() ^ m_invert_controls; })); // Player 1
-    input_p1_cs      <= m68k_cs( 24'h0e0041, 24'h0e0041 ) ; 
+    input_p1_cs      <= m68k_cs( 24'h0e0040, 24'h0e0041 ) ; 
 //	map(0x0e0042, 0x0e0043).portr("DSW0");                   // DIPs
     input_dsw1_cs    <= m68k_cs( 24'h0e0042, 24'h0e0043 ) ; 
 //	map(0x0e0044, 0x0e0045).portr("DSW1");                   // DIPs + VBLANK
