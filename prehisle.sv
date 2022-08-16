@@ -212,8 +212,9 @@ wire [2:0]  scan_lines = status[6:4];
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
 
+wire key_test_en = ~(status[36] | key_test);
 wire gfx1_en = ~(status[37] | key_txt_enable);
-wire gfx2_en = ~(status[38] | key_fg_enable );
+wire gfx2_en = ~(status[38] | key_fg_enable);
 wire gfx3_en = ~(status[39] | key_bg_enable);
 wire gfx4_en = ~(status[40] | key_spr_enable);
 
