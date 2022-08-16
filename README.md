@@ -1,12 +1,15 @@
 
-# SNK M68000 (Prehistoric Isle in 1930 Based) FPGA Implementation
 
-FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O).
+# SNK M68000 (Prehistoric Isle in 1930) FPGA Implementation
 
-The intent is for this core to be a 1:1 implementation of the SNK (Prehistoric Isle in 1930 based) 68000 hardware. Currently in an alpha state, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
+FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O). The intent is for this core to be a 1:1 playable implementation of the SNK (Prehistoric Isle in 1930 based) 68000 hardware. 
+
+Currently in an alpha state, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
 
 <br>
-<img width="" height="" src="">
+<p align="center">
+<img width="" height="" src="https://user-images.githubusercontent.com/32810066/184925944-f5d7b8f2-e589-41d0-adb8-959bc693aae5.png">
+</p>
 <br>
 
 ## External Modules
@@ -24,13 +27,13 @@ The intent is for this core to be a 1:1 implementation of the SNK (Prehistoric I
 
 # PCB Check List
 
-FPGA implementation is based on Prehistoric Isle in 1930 and verified against published schematics.
+- TBD
 
 ### Clock Information
 
-H-Sync      | V-Sync      | Source                                   |
-------------|-------------|------------------------------------------|
-15.625kHz   | 59.185606Hz | [Schematics]()    |
+H-Sync      | V-Sync      |
+------------|-------------|
+15.625kHz   | 59.185606Hz |
 
 **Pixel clock:** 6.00 MHz
 
@@ -53,14 +56,11 @@ E14 (Top Board) | [**NEC uPD7759**](https://github.com/jotego/jt7759)           
 
 - TBD
 
-
 # Controls
 
 <br>
 
-<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Shared Controls</th><th>Dip Default</th></tr><tr><td><p align="center">Prehistoric<br>Isle in<br>1930</p></td><td><p align="center">8-Way</p></td><td><p align="center"><img src="***"></td><td><p align="center">Upright</td><td><p align="center"><b>Upright</b></td> </table>
-
-
+<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Control Type</th></tr><tr><td><p align="center">Prehistoric Isle in 1930</p></td><td><p align="center">8-Way</p></td><td><p align="center"><img src="https://user-images.githubusercontent.com/32810066/184927270-92710d25-e63e-4cd9-b4a7-a7713e4532a2.png"></td><td><p align="center">Co-Op</td> </table>
 
 <br>
 

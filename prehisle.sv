@@ -369,8 +369,7 @@ wire        b_pause    = joy0[11]  | key_pause;
 // Keyboard handler
 
 wire key_start_1p, key_start_2p, key_coin_a, key_coin_b;
-wire key_reset, key_service, key_pause, key_tilt;
-wire (key_test | status[36]);
+wire key_reset, key_test, key_service, key_pause, key_tilt;
 wire key_txt_enable, key_fg_enable, key_bg_enable, key_spr_enable;
 
 wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c;
