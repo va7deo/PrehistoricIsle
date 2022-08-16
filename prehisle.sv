@@ -192,7 +192,7 @@ assign VGA_SCALER = 0;
 assign HDMI_FREEZE = 0;
 
 assign AUDIO_MIX = 0;
-assign LED_USER = 0 ;
+assign LED_USER =  | sprite_ram_dout ;
 assign LED_DISK = 0;
 assign LED_POWER = 0;
 assign BUTTONS = 0;
@@ -596,16 +596,17 @@ wire [11:0] pal3 [0:15] = '{12'h541,12'h975,12'h482,12'h251,12'h121,12'h6ed,12'h
 // 0xffaa0000,0xffcc1111,0xffee4422,0xffff7744,0xff112211,0xff224422,0xff336622,0xff558833,0xff669944,0xff99bb55,0xff110000,0xffccdd77,0xffeeee99,0xff440000,0xffffffff,0xff000000
 
 reg [4:0] tile_state;
-reg [8:0] x;
+reg [4:0] sprite_state;
+reg [8:0] sprite_num;
+
+reg  [8:0] x;
 wire [8:0] tx_x = x ;
 wire [8:0] tx_y = vc ;
 
-reg [2:0] pri_buf[0:255];
-
-//reg  [15:0] txt_rom_addr;
-reg [31:0] pix_data;
-//reg txt_rom_cs;
-//wire txt_rom_valid;
+reg   [2:0] pri_buf[0:255];
+ 
+reg  [31:0] pix_data;
+reg  [31:0] spr_pix_data;
 
 wire [13:0] fg_x = x  + fg_scroll_x ;
 wire  [8:0] fg_y = vc + fg_scroll_y ;
@@ -614,14 +615,18 @@ wire [13:0] bg_x = x  + bg_scroll_x ;
 wire  [8:0] bg_y = vc + bg_scroll_y ;
 
 wire  [9:0] txt_tile = { vc[7:3], hc[7:3] };
-wire [14:0] fg_tile  = { fg_x[10:4], fg_y[8:4] } ; 
+wire [14:0] fg_tile  = { fg_x[11:4], fg_y[8:4] } ; 
 wire [14:0] bg_tile  = { bg_x[13:4], bg_y[8:4] } ; 
+
+reg [3:0] sprite_colour;
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
         tile_state <= 0;
     end else begin
-
+    
+        // tiles
+        
         if ( tile_state == 0 && hc == 0 ) begin
             tile_state <= 1;
             x <= 0;
@@ -766,17 +771,162 @@ always @ (posedge clk_sys) begin
             tile_state <= 0;      
             
         end
+        
+        // sprites
+        
+        if ( sprite_state == 0 && hc == 0 ) begin
+            sprite_state <= 21;
+            sprite_num <= 0;
+            // setup clearing line buffer
+            spr_buf_din <= 15 ;
+            spr_x_pos <= 0;
+        end else if ( sprite_state == 21 )  begin  
+            spr_buf_w <= 1 ;
+            spr_buf_addr_w <= { vc[0], spr_x_pos };
+            if ( spr_x_pos == 255 ) begin
+                spr_buf_w <= 0 ;
+                sprite_state <= 22;
+            end
+            spr_x_pos <= spr_x_pos + 1;
+        end else if ( sprite_state == 22 )  begin            
+            sprite_state <= 1;
+        end else if ( sprite_state == 1 )  begin
+            spr_buf_w <= 0 ;
+            sprite_ram_addr <= { sprite_num, 2'b0 } ; // y 
+            sprite_state <= 2;
+        end else if ( sprite_state == 2 )  begin
+            // address valid read y
+            sprite_state <= 3;
+        end else if ( sprite_state == 3 )  begin
+            // y valid
+            if ( vc >= sprite_y && vc < ( sprite_y + 16 ) ) begin
+                spr_y_ofs <= vc - sprite_y ;
+                // setup to read x
+                sprite_ram_addr <= sprite_ram_addr + 1 ;
+                sprite_state <= 4;
+            end else begin
+                sprite_state <= 31;
+            end
+        end else if ( sprite_state == 4 ) begin
+            // x address valid 
+            sprite_state <= 5;
+        end else if ( sprite_state == 5 ) begin
+            // x value valid 
+            if ( sprite_ram_dout[7:0] < 8'hff ) begin
+                spr_x_ofs <= 0 ;
+                spr_x_pos <= sprite_ram_dout[8:0] ;
+                // read attribute / tile index
+                sprite_ram_addr <= sprite_ram_addr + 1 ;
+                
+                sprite_state <= 6;
+            end else begin
+                sprite_state <= 31;
+            end
+        end else if ( sprite_state == 6 ) begin
+            // attribute address valid
+            sprite_state <= 7;
+        end else if ( sprite_state == 7 ) begin
+            // attribute data valid
+            spr_tile_num <= sprite_ram_dout[12:0] ;
+            spr_flip_x <= sprite_ram_dout[14];
+            spr_flip_y <= sprite_ram_dout[15];
+            
+            sprite_ram_addr <= sprite_ram_addr + 1 ;
+            
+            sprite_state <= 8;
+        end else if ( sprite_state == 8 ) begin    
+            sprite_rom_addr <= { spr_tile_num, spr_flip_x ^ spr_x_ofs[3], { 4 {spr_flip_y} } ^ spr_y_ofs[3:0] } ;
+            sprite_rom_cs <= 1;
+            sprite_state <= 9;
+        end else if ( sprite_state == 9 ) begin  
+            sprite_colour <= sprite_ram_dout[15:12];
+            // wait for sprite bitmap data
+            if ( sprite_rom_valid == 1 ) begin
+                sprite_rom_cs <= 0;
+                spr_pix_data <= sprite_rom_data;
+                sprite_state <= 10 ;
+            end
+        end else if ( sprite_state == 10 ) begin                    
+            spr_buf_addr_w <= { vc[0], spr_x_pos };
+            case ( { 3 { spr_flip_x } } ^ spr_x_ofs[2:0] ) // case ( x[2:0] )
+            //case ( spr_x_ofs[2:0] ) // case ( x[2:0] )
+                0: spr_buf_din <= { sprite_colour, spr_pix_data[31:28] }; 
+                1: spr_buf_din <= { sprite_colour, spr_pix_data[27:24] }; 
+                2: spr_buf_din <= { sprite_colour, spr_pix_data[23:20] }; 
+                3: spr_buf_din <= { sprite_colour, spr_pix_data[19:16] }; 
+                4: spr_buf_din <= { sprite_colour, spr_pix_data[15:12] }; 
+                5: spr_buf_din <= { sprite_colour, spr_pix_data[11:8] }; 
+                6: spr_buf_din <= { sprite_colour, spr_pix_data[7:4] }; 
+                7: spr_buf_din <= { sprite_colour, spr_pix_data[3:0] }; 
+            endcase 
+            sprite_state <= 16;
+        end else if ( sprite_state == 16 ) begin
+              spr_buf_w <= ( spr_buf_din[3:0] < 15 );
+//            spr_buf_addr_w <= { vc[0], spr_x_pos };
+            if ( spr_x_ofs < 16 ) begin
+//                spr_buf_din <= 1 ;
+//                spr_buf_w <= 1 ;
+                sprite_state <= 17;
+            end else begin
+                spr_buf_w <= 0;
+                sprite_state <= 31;
+            end
+        end else if ( sprite_state == 17 ) begin
+            spr_x_ofs <= spr_x_ofs + 1 ;
+            spr_x_pos <= spr_x_pos + 1 ;
+            sprite_state <= 8;
+        end else if ( sprite_state == 31 ) begin
+//            spr_buf_w <= 0;
+            if ( sprite_num < 256 ) begin
+                // next sprite
+                sprite_num <= sprite_num + 1 ;
+                sprite_state <= 1;
+            end else begin
+                // done.
+                sprite_state <= 0;
+            end
+        end
    
     end
 end
 
+wire [8:0] sprite_y =  sprite_ram_dout[8:0]  ; // { 8 {sprite_ram_dout[8]} } ^
+reg  [3:0] spr_y_ofs ;
+
+reg  [8:0]  spr_x_ofs;
+reg  [8:0]  spr_x_pos;
+reg [12:0]  spr_tile_num;
+reg         spr_flip_x;
+reg         spr_flip_y;
+
+//int16_t sy = spriteram16[offs] & 0x1ff;
+//int16_t sx = spriteram16[offs + 1] & 0x1ff;
+//uint16_t const attr = spriteram16[offs + 2];
+//uint16_t const color = spriteram16[offs + 3] >> 12;
+//uint16_t const code = attr & 0x1fff;
+//uint32_t const priority = GFX_PMASK_4 | ((color < 0x4) ? 0 : GFX_PMASK_2); // correct?
+//bool flipx = attr & 0x4000;
+//bool flipy = attr & 0x8000;
+        
+// sprite addr 0 - 3ff
+// sprite num 0 - ff
+//reg  [10:0] sprite_ram_addr;
+//wire [15:0] sprite_ram_dout;
+
+//reg   [9:0]  spr_buf_addr_w;
+//reg          spr_buf_w;
+//reg   [7:0]  spr_buf_din;
+//wire  [7:0]  spr_buf_dout;
+
 reg [7:0] tx;
 reg [7:0] fg;
 reg [7:0] bg;
+reg [7:0] sp;
 
 reg [23:0] rgb_tx;
 reg [23:0] rgb_fg;
 reg [23:0] rgb_bg;
+reg [23:0] rgb_sp;
 
 //always @ (posedge clk_sys) begin
 //    if ( reset == 1 ) begin
@@ -811,6 +961,7 @@ always @ (posedge clk_sys) begin
                 tx <= line_buf_tx_out[7:0] ;
                 fg <= line_buf_fg_out[7:0] ;
                 bg <= line_buf_bg_out[7:0] ;
+                sp <= spr_buf_dout[7:0] ;
             end else if ( clk6_count == 3 ) begin                
                 tile_pal_addr <= 12'd768 + bg ;
             end else if ( clk6_count == 5 ) begin                
@@ -821,12 +972,17 @@ always @ (posedge clk_sys) begin
                 tile_pal_addr <= tx ;
             end else if ( clk6_count == 9 ) begin                
                 rgb_tx <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-            end else if ( clk6_count == 0 ) begin                                
+                tile_pal_addr <= 12'd256 + sp ;
+            end else if ( clk6_count == 11 ) begin                
+                rgb_sp <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
+            end else if ( clk6_count == 0  ) begin                                
                 rgb <= rgb_bg;
                 if ( fg[3:0] < 15 ) begin
                     rgb <= rgb_fg;
                 end
-                
+                if ( sp[3:0] < 15 ) begin
+                    rgb <= rgb_sp;
+                end
                 if ( tx[3:0] < 15 ) begin
                     rgb <= rgb_tx;
                 end
@@ -1238,7 +1394,7 @@ dual_port_ram #(.LEN(8192)) ram8kx8_L (
     );
 
 reg  [10:0] sprite_ram_addr;
-wire [15:0] sprite_ram_dout;
+wire [15:0] sprite_ram_dout /* synthesis keep */;
 
     // main 68k sprite ram high  
 // 2kx16
@@ -1464,12 +1620,30 @@ reg          line_buf_fg_w;
 reg          line_buf_bg_w;
 reg   [9:0]  line_buf_addr_w;
 reg   [7:0]  line_buf_din;
-wire  [7:0]  line_buf_dout;
+//wire  [7:0]  line_buf_dout;
 
 reg   [9:0]  line_buf_addr_r ; 
 wire  [7:0]  line_buf_tx_out;
 wire  [7:0]  line_buf_fg_out;
 wire  [7:0]  line_buf_bg_out;
+
+reg   [9:0]  spr_buf_addr_w;
+reg          spr_buf_w;
+reg   [7:0]  spr_buf_din;
+wire  [7:0]  spr_buf_dout;
+    
+dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) spr_buffer_ram (
+    .clock_a ( clk_sys ),
+    .address_a ( spr_buf_addr_w ),
+    .wren_a ( spr_buf_w ),
+    .data_a ( spr_buf_din ),
+    .q_a (  ),
+
+    .clock_b ( clk_sys ),
+    .address_b ( line_buf_addr_r ),  // spr_buf_addr_r
+    .wren_b ( 0 ),
+    .q_b ( spr_buf_dout )
+    ); 
     
 // two line buffer for sprite rendering
 dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_tx (
@@ -1477,12 +1651,11 @@ dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_tx (
     .address_a ( line_buf_addr_w ),
     .wren_a ( line_buf_tx_w ),
     .data_a ( line_buf_din ),
-    .q_a ( line_buf_dout ),
+//    .q_a ( line_buf_dout ),
 
     .clock_b ( clk_sys ),
     .address_b ( line_buf_addr_r ),  
     .wren_b ( 0 ),
-//    .data_b ( ),
     .q_b ( line_buf_tx_out )
     );    
     
@@ -1491,12 +1664,11 @@ dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_fg (
     .address_a ( line_buf_addr_w ),
     .wren_a ( line_buf_fg_w ),
     .data_a ( line_buf_din ),
-    .q_a ( line_buf_dout ),
+//    .q_a ( line_buf_dout ),
 
     .clock_b ( clk_sys ),
     .address_b ( line_buf_addr_r ),  
     .wren_b ( 0 ),
-//    .data_b ( ),
     .q_b ( line_buf_fg_out )
     );    
 
@@ -1505,14 +1677,16 @@ dual_port_ram #(.LEN(1024), .DATA_WIDTH(8)) line_buffer_ram_bg (
     .address_a ( line_buf_addr_w ),
     .wren_a ( line_buf_bg_w ),
     .data_a ( line_buf_din ),
-    .q_a ( line_buf_dout ),
+//    .q_a ( line_buf_dout ),
 
     .clock_b ( clk_sys ),
     .address_b ( line_buf_addr_r ),  
     .wren_b ( 0 ),
-//    .data_b ( ),
     .q_b ( line_buf_bg_out )
     );   
+    
+  
+    
 
 reg  [11:0] gfx_txt_addr;
 wire  [7:0] gfx_txt_dout;
@@ -1713,3 +1887,21 @@ sdram #(.CLK_FREQ( (CLKSYS+0.0))) sdram
 );    
     
 endmodule
+
+module delay
+(
+    input clk,  
+    input i,
+    output o
+);
+
+reg [5:0] r;
+
+assign o = r[5]; 
+
+always @(posedge clk) begin
+    r <= { r[4:0], i };
+end
+
+endmodule
+

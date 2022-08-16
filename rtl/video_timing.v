@@ -23,7 +23,7 @@ module video_timing
 // 6MHz
 wire [8:0] h_ofs = 0;
 wire [8:0] HBL_START  = 256 ;
-wire [8:0] HBL_END    = 384 ;
+wire [8:0] HBL_END    = 0 ;
 wire [8:0] HS_START   = HBL_START + 8 ;
 wire [8:0] HS_END     = HBL_START + 40 ;
 wire [8:0] HTOTAL     = 384;
