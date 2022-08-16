@@ -26,14 +26,14 @@ wire [8:0] HBL_START  = 256 ;
 wire [8:0] HBL_END    = 0 ;
 wire [8:0] HS_START   = HBL_START + 8 ;
 wire [8:0] HS_END     = HBL_START + 40 ;
-wire [8:0] HTOTAL     = 384;
+wire [8:0] HTOTAL     = 383;
 
 wire [8:0] v_ofs = 0;
 wire [8:0] VBL_START  = 240 ;
 wire [8:0] VBL_END    = 16 ;
 wire [8:0] VS_START   = VBL_START + 4 ;
 wire [8:0] VS_END     = VBL_START + 8 ;
-wire [8:0] VTOTAL     = 262 ;
+wire [8:0] VTOTAL     = 261 ;
 
 reg [8:0] v;
 reg [8:0] h;
