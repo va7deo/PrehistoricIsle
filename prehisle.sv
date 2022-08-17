@@ -999,50 +999,78 @@ always @ (posedge clk_sys) begin
 
     if ( reset == 1 ) begin
         m68k_dtack_n <= 1;
-        
-//    end else if ( clk_8M == 1 ) begin
-    end else if ( clk_18M == 1 ) begin
-        // tell 68k to wait for valid data. 0=ready 1=wait
-        // always ack when it's not program rom
-        m68k_dtack_n <= m68k_rom_cs ? !m68k_rom_valid : 
-                        0; 
+    end else begin
+        if ( clk_18M == 1 ) begin
+            // tell 68k to wait for valid data. 0=ready 1=wait
+            // always ack when it's not program rom
+            m68k_dtack_n <= m68k_rom_cs ? !m68k_rom_valid : 
+                            0; 
 
-        // select cpu data input based on what is active 
-        m68k_din <=  m68k_rom_cs  ? m68k_rom_data :
-                     m68k_ram_cs  ? m68k_ram_dout :
-                     m68k_txt_ram_cs ? m68k_txt_ram_dout :
-                     m68k_spr_cs  ? m68k_sprite_dout :
-                     m68k_fg_ram_cs ? m68k_fg_ram_dout :
-                     m68k_pal_cs ? m68k_pal_dout :
-                     input_p1_cs ? p1 :
-                     input_p2_cs ? p2 :
-                     input_dsw1_cs ? dsw1 :
-                     input_dsw2_cs ? dsw2 :
-                     input_coin_cs ? coin :
-                     16'd0;
-                     
-        // write asserted and rising cpu clock
-        if ( m68k_rw == 0 ) begin        
-
-            if ( fg_scroll_x_cs == 1 ) begin
-                fg_scroll_x <= m68k_dout;
-            end                     
-            if ( fg_scroll_y_cs == 1 ) begin
-                fg_scroll_y <= m68k_dout;
-            end  
+            // select cpu data input based on what is active 
+            m68k_din <=  m68k_rom_cs  ? m68k_rom_data :
+                         m68k_ram_cs  ? m68k_ram_dout :
+                         m68k_txt_ram_cs ? m68k_txt_ram_dout :
+                         m68k_spr_cs  ? m68k_sprite_dout :
+                         m68k_fg_ram_cs ? m68k_fg_ram_dout :
+                         m68k_pal_cs ? m68k_pal_dout :
+                         input_p1_cs ? p1 :
+                         input_p2_cs ? p2 :
+                         input_dsw1_cs ? dsw1 :
+                         input_dsw2_cs ? dsw2 :
+                         input_coin_cs ? coin :
+                         16'd0;
+                         
+            // write asserted and rising cpu clock
+            if ( m68k_rw == 0 ) begin        
             
-            if ( bg_scroll_x_cs == 1 ) begin
-                bg_scroll_x <= m68k_dout;
-            end                     
-            if ( bg_scroll_y_cs == 1 ) begin
-                bg_scroll_y <= m68k_dout;
-            end                     
-        end         
+                if ( sound_latch_cs == 1 ) begin
+                    sound_latch <= m68k_dout[7:0];
+                    z80_irq_n <= 0 ;
+                end
+ 
+                if ( fg_scroll_x_cs == 1 ) begin
+                    fg_scroll_x <= m68k_dout;
+                end      
+                
+                if ( fg_scroll_y_cs == 1 ) begin
+                    fg_scroll_y <= m68k_dout;
+                end  
+                
+                if ( bg_scroll_x_cs == 1 ) begin
+                    bg_scroll_x <= m68k_dout;
+                end    
+                
+                if ( bg_scroll_y_cs == 1 ) begin
+                    bg_scroll_y <= m68k_dout;
+                end                     
+            end 
+        end
+        
+        if ( clk_6M == 1 ) begin
+
+            // check for interrupt ack and deassert int
+            if ( M1_n == 0 && IORQ_n == 0 && z80_irq_n == 0 ) begin
+                z80_irq_n <= 1;
+            end  
+        end
     end
 end 
 
 
-
+////IORQ gets together with M1-pin active/low. 
+//always @ (posedge clk_sys) begin
+//    
+//    if ( reset == 1 ) begin
+//        z80_a_irq_n <= 1;
+//    end else if ( clk_ym == 1 ) begin
+//        z80_a_irq_n <= 0;
+//    end 
+//    
+//    // check for interrupt ack and deassert int
+//    if ( M1_a_n == 0 && z80_a_irq_n == 0 && IORQ_a_n == 0 ) begin
+//        z80_a_irq_n <= 1;
+//    end
+//end
  
 wire    m68k_rom_cs;
 wire    m68k_ram_cs;
@@ -1079,6 +1107,11 @@ chip_select cs (
     .m68k_a(m68k_a),
     .m68k_as_n(m68k_as_n),
 
+    .z80_addr,
+    .MREQ_n,
+    .IORQ_n,
+    .M1_n,
+    
     // 68k chip selects
     .m68k_rom_cs,
     .m68k_ram_cs,
@@ -1248,7 +1281,7 @@ T80pa z80 (
     .CLK        ( clk_sys ),
     .CEN_p      ( clk_6M ),
     .CEN_n      ( ~clk_6M ),
-    .WAIT_n     ( z80_wait_n ), 
+    .WAIT_n     ( 1'b1 ), // z80_wait_n
     .INT_n      ( z80_irq_n ),  
     .NMI_n      ( 1'b1 ),
     .BUSRQ_n    ( 1'b1 ),
@@ -1276,16 +1309,20 @@ always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
         
     end else if ( clk_6M == 1 ) begin
-        if ( z80_rom_cs == 1 ) begin
-            z80_din <= z80_rom_data ;
-        end                     
-        if ( z80_ram_cs == 1 ) begin
-            z80_din <= z80_ram_data ;
-        end  
+        if ( z80_rd_n == 0 ) begin
+        
+            if ( z80_rom_cs == 1 ) begin
+                z80_din <= z80_rom_data ;
+            end             
+            
+            if ( z80_ram_cs == 1 ) begin
+                z80_din <= z80_ram_data ;
+            end  
 
-        if ( z80_latch_cs == 1 ) begin
-            z80_din <= sound_latch ;
-        end  
+            if ( z80_latch_cs == 1 ) begin
+                z80_din <= sound_latch ;
+            end  
+        end
         
         sound_wr <= 0 ;
         if ( z80_wr_n == 0 ) begin 
@@ -1298,6 +1335,9 @@ always @ (posedge clk_sys) begin
     end
 end 
 
+//    z80_sound0_cs    <= z80_io_cs(8'h00); // ym3812 address
+//    z80_sound1_cs    <= z80_io_cs(8'h20); // ym3812 data
+    
 reg sound_addr ;
 reg  [7:0] sound_data ;
 
@@ -1534,7 +1574,7 @@ dual_port_ram #(.LEN(1024)) tile_pal_l (
     
 //z80 program rom    
 dual_port_ram #(.LEN(65536)) z80_rom (
-    .clock_a ( clk_sys ),
+    .clock_a ( clk_6M ),
     .address_a ( z80_addr[15:0] ),
     .wren_a ( 1'b0 ),
     .data_a ( ),
@@ -1574,22 +1614,22 @@ dual_port_ram #(.LEN(131072)) upd_rom (
     .q_b( )
     );
     
-reg  [15:0] bg_tilemap_addr ;
-wire [15:0] bg_tilemap_dout ;
-reg  [15:0] bg_download_data;
-reg         bg_download_wr;
+//reg  [15:0] bg_tilemap_addr ;
+//wire [15:0] bg_tilemap_dout ;
+//reg  [15:0] bg_download_data;
+//reg         bg_download_wr;
 
-// The SDRAM controller has a 32-bit interface, so we need to buffer the
-// bytes received from the IOCTL interface in order to write 32-bit words to
-// the SDRAM. 
-download_buffer #(.SIZE(2)) bg_download_buffer
-(
-    .clk(clk_sys),
-    .din(ioctl_dout),
-    .dout(bg_download_data),
-    .we(upd_ioctl_wr),
-    .valid(bg_download_wr)
-);
+//// The SDRAM controller has a 32-bit interface, so we need to buffer the
+//// bytes received from the IOCTL interface in order to write 32-bit words to
+//// the SDRAM. 
+//download_buffer #(.SIZE(2)) bg_download_buffer
+//(
+//    .clk(clk_sys),
+//    .din(ioctl_dout),
+//    .dout(bg_download_data),
+//    .we(upd_ioctl_wr),
+//    .valid(bg_download_wr)
+//);
 
 
 wire [15:0] spr_pal_dout ;

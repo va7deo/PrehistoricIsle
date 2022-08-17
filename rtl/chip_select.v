@@ -62,7 +62,7 @@ endfunction
 function z80_io_cs;
         input [7:0] address_lo;
 begin
-    z80_io_cs = ( IORQ_n == 0 && z80_addr[7:0] == address_lo );
+    z80_io_cs = ( z80_addr[7:0] == address_lo ) && !IORQ_n ;
 end
 endfunction
 
@@ -87,7 +87,7 @@ always @ (*) begin
     input_coin_cs    <= m68k_cs( 24'h0e0020, 24'h0e0021 ) ; 
     
 //	map(0x0e0041, 0x0e0041).lr8(NAME([this] () -> u8 { return m_io_p1->read() ^ m_invert_controls; })); // Player 1
-    input_p1_cs      <= m68k_cs( 24'h0e0041, 24'h0e0041 ) ; 
+    input_p1_cs      <= m68k_cs( 24'h0e0040, 24'h0e0041 ) ; 
 //	map(0x0e0042, 0x0e0043).portr("DSW0");                   // DIPs
     input_dsw1_cs    <= m68k_cs( 24'h0e0042, 24'h0e0043 ) ; 
 //	map(0x0e0044, 0x0e0045).portr("DSW1");                   // DIPs + VBLANK
@@ -104,7 +104,7 @@ always @ (*) begin
     bg_scroll_x_cs   <= m68k_cs( 24'h0f0030, 24'h0f0031 ) ; 
 
 //	map(0x0f0070, 0x0f0071).w(FUNC(prehisle_state::soundcmd_w));
-    sound_latch_cs   <= m68k_cs( 24'h0f0070, 24'h0f0070 ) ; 
+    sound_latch_cs   <= m68k_cs( 24'h0f0070, 24'h0f0071 ) ; 
 
     z80_rom_cs       <= ( MREQ_n == 0 && z80_addr[15:0] < 16'hf000 );
     z80_ram_cs       <= ( MREQ_n == 0 && z80_addr[15:0] >= 16'hf000 && z80_addr[15:0] < 16'hf800 );
@@ -112,7 +112,7 @@ always @ (*) begin
     z80_sound0_cs    <= z80_io_cs(8'h00); // ym3812 address
     z80_sound1_cs    <= z80_io_cs(8'h20); // ym3812 data
     z80_upd_cs       <= z80_io_cs(8'h40); // 7759 write
-    z80_upd_r_cs     <= z80_io_cs(8'h06); // 7759 reset
+    z80_upd_r_cs     <= z80_io_cs(8'h80); // 7759 reset
 end
 
 
