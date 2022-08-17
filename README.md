@@ -33,7 +33,7 @@ Currently in an alpha state, this core is in active development with assistance 
 
 H-Sync      | V-Sync      |
 ------------|-------------|
-15.625kHz   | 59.185606Hz |
+15.625kHz   | 59.637404Hz |
 
 **Pixel clock:** 6.00 MHz
 
@@ -41,7 +41,7 @@ H-Sync      | V-Sync      |
 
     383 pixels/line
   
-    263 pixels/line
+    261 pixels/line
 
 ### Main Components
 
