@@ -33,11 +33,7 @@ wire [8:0] VBL_START  = 240 ;
 wire [8:0] VBL_END    = 16 ;
 wire [8:0] VS_START   = VBL_START + 4 ;
 wire [8:0] VS_END     = VBL_START + 8 ;
-<<<<<<< HEAD
 wire [8:0] VTOTAL     = 288 ;
-=======
-wire [8:0] VTOTAL     = 261 ;
->>>>>>> 96a9cd5171ab24ddc25e0269351f3af62880a200
 
 reg [8:0] v;
 reg [8:0] h;
