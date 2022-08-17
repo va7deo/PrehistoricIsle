@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXX X        XXX XXXXXXXX    XXXXXX                       
+// X  XXXXXXXX         XXX XXXXXXXX     XXXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -212,8 +212,9 @@ wire [2:0]  scan_lines = status[6:4];
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
 
+wire key_test_en = (status[36] | key_test);
 wire gfx1_en = ~(status[37] | key_txt_enable);
-wire gfx2_en = ~(status[38] | key_fg_enable );
+wire gfx2_en = ~(status[38] | key_fg_enable);
 wire gfx3_en = ~(status[39] | key_bg_enable);
 wire gfx4_en = ~(status[40] | key_spr_enable);
 
@@ -222,7 +223,7 @@ assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd3 : 8'd4) : 12'd0;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-    "Prehistoric Isle;;",
+    "prehisle;;",
     "-;",
     "P1,Video Settings;",
     "P1-;",
@@ -245,9 +246,7 @@ localparam CONF_STR = {
     "-;",
     "P3,PCB & Debug Settings;",
     "P3-;",
-    "P3OB,Turbo (Legion Sets),Off,On;",    
-    "P3o3,Service Menu,Off,On;",
-    "P3o4,Debug Menu,Off,On;",
+    "P3o4,Service Menu,Off,On;",
     "P3-;",
     "P3o5,Text Layer,On,Off;",
     "P3o6,Foreground Layer,On,Off;",
@@ -331,55 +330,55 @@ end
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
-reg [15:0] p1 ;
-reg [15:0] p2 ;
-reg [15:0] dsw1 ;
-reg [15:0] dsw2 ;
-reg [15:0] coin ;
-reg [15:0] sys ;
+reg [15:0] p1;   // PORT_START("P1")
+reg [15:0] p2;   // PORT_START("P2")
+reg [15:0] dsw1; // PORT_START("DSW0")
+reg [15:0] dsw2; // PORT_START("DSW1")
+reg [15:0] coin; // PORT_START("COIN")
+reg p1_invert;
 
-always @ (posedge clk_sys ) begin 
+always @ (posedge clk_sys ) begin
     p1 <= 16'hffff;
-    p1[7:0] <= ~{ start1, p1_buttons[2:0], p1_right, p1_left ,p1_down, p1_up};
-     
+    p1[7:0] <= { 8 {p1_invert} } ^ ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up};
+
     p2 <= 16'hffff;
-    p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left ,p2_down, p2_up};
-    
+    p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left , p2_down, p2_up};
+
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 14'hffff, coin_b, coin_a };
+    coin <=  { 11'h7ff, key_tilt, key_test, key_service, coin_b, coin_a };
 end
 
-wire        p1_right   = joy0[0] | key_p1_right;
-wire        p1_left    = joy0[1] | key_p1_left;
-wire        p1_down    = joy0[2] | key_p1_down;
-wire        p1_up      = joy0[3] | key_p1_up;
-wire [3:0]  p1_buttons = joy0[7:4] | {key_p1_d, key_p1_c, key_p1_b, key_p1_a};
+wire        p1_right   = joy0[0]   | key_p1_right;
+wire        p1_left    = joy0[1]   | key_p1_left;
+wire        p1_down    = joy0[2]   | key_p1_down;
+wire        p1_up      = joy0[3]   | key_p1_up;
+wire [2:0]  p1_buttons = joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
-wire        p2_right   = joy1[0] | key_p2_right;
-wire        p2_left    = joy1[1] | key_p2_left;
-wire        p2_down    = joy1[2] | key_p2_down;
-wire        p2_up      = joy1[3] | key_p2_up | status[36];
-wire [3:0]  p2_buttons = joy1[7:4] | {key_p2_d, key_p2_c, key_p2_b | status[36], key_p2_a | status[36]};
+wire        p2_right   = joy1[0]   | key_p2_right;
+wire        p2_left    = joy1[1]   | key_p2_left;
+wire        p2_down    = joy1[2]   | key_p2_down;
+wire        p2_up      = joy1[3]   | key_p2_up;
+wire [2:0]  p2_buttons = joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
 
-wire        start1  = joy0[8]  | joy1[8]  | key_start_1p;
-wire        start2  = joy0[9]  | joy1[9]  | key_start_2p | status[11];
-wire        coin_a  = joy0[10] | joy1[10] | key_coin_a;
-wire        coin_b  = joy0[11] | joy1[11] | key_coin_b;
-wire        b_pause = joy0[12] | key_pause ;
+wire        start1     = joy0[7]   | joy1[7]    | key_start_1p;
+wire        start2     = joy0[8]   | joy1[8]    | key_start_2p;
+wire        coin_a     = joy0[9]   | joy1[9]    | key_coin_a;
+wire        coin_b     = joy0[10]  | joy1[10]   | key_coin_b;
+wire        b_pause    = joy0[11]  | key_pause;
 
 // Keyboard handler
 
 wire key_start_1p, key_start_2p, key_coin_a, key_coin_b;
-wire key_test, key_reset, key_service, key_pause;
+wire key_reset, key_test, key_service, key_pause, key_tilt;
 wire key_txt_enable, key_fg_enable, key_bg_enable, key_spr_enable;
 
-wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
-wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c, key_p2_d;
+wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c;
+wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c;
 
 wire pressed = ps2_key[9];
 
-always @(posedge clk_sys) begin 
+always @(posedge clk_sys) begin
     reg old_state;
 
     old_state <= ps2_key[10];
@@ -392,6 +391,7 @@ always @(posedge clk_sys) begin
             'h006: key_test       <= key_test ^ pressed; // f2
             'h004: key_reset      <= pressed; // f3
             'h046: key_service    <= pressed; // 9
+            'h02c: key_tilt       <= pressed; // t
             'h04D: key_pause      <= pressed; // p
 
             'hX75: key_p1_up      <= pressed; // up
@@ -401,7 +401,6 @@ always @(posedge clk_sys) begin
             'h014: key_p1_a       <= pressed; // lctrl
             'h011: key_p1_b       <= pressed; // lalt
             'h029: key_p1_c       <= pressed; // spacebar
-            'h012: key_p1_d       <= pressed; // lshift
 
             'h02d: key_p2_up      <= pressed; // r
             'h02b: key_p2_down    <= pressed; // f
@@ -410,7 +409,6 @@ always @(posedge clk_sys) begin
             'h01c: key_p2_a       <= pressed; // a
             'h01b: key_p2_b       <= pressed; // s
             'h015: key_p2_c       <= pressed; // q
-            'h01d: key_p2_d       <= pressed; // w
 
             'h083: key_txt_enable <= key_txt_enable ^ pressed; // f7
             'h00A: key_bg_enable  <= key_bg_enable  ^ pressed; // f8
