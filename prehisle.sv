@@ -427,7 +427,7 @@ reg user_flip;
 wire pll_locked;
 
 wire clk_sys;
-reg  clk_6M,clk_9M,clk_18M;
+reg  clk_4M,clk_6M,clk_9M,clk_18M;
 
 wire clk_72M;
 
@@ -447,11 +447,20 @@ localparam  CLKSYS=72;
 reg [5:0] clk18_count;
 reg [5:0] clk9_count;
 reg [5:0] clk6_count;
+reg [5:0] clk4_count;
 reg [15:0] clk_ym_count;
 
 
 always @ (posedge clk_sys) begin
 
+    clk_4M <= ( clk4_count == 0 );
+
+    if ( clk4_count == 15 ) begin
+        clk4_count <= 0;
+    end else begin
+        clk4_count <= clk4_count + 1;
+    end
+    
     clk_6M <= ( clk6_count == 0 );
 
     if ( clk6_count == 11 ) begin
@@ -999,6 +1008,9 @@ always @ (posedge clk_sys) begin
 
     if ( reset == 1 ) begin
         m68k_dtack_n <= 1;
+        z80_nmi_n <= 1 ;
+        z80_irq_n <= 1 ;
+        
     end else begin
         if ( clk_18M == 1 ) begin
             // tell 68k to wait for valid data. 0=ready 1=wait
@@ -1025,7 +1037,7 @@ always @ (posedge clk_sys) begin
             
                 if ( sound_latch_cs == 1 ) begin
                     sound_latch <= m68k_dout[7:0];
-                    z80_irq_n <= 0 ;
+                    z80_nmi_n <= 0 ;
                 end
  
                 if ( fg_scroll_x_cs == 1 ) begin
@@ -1046,12 +1058,8 @@ always @ (posedge clk_sys) begin
             end 
         end
         
-        if ( clk_6M == 1 ) begin
-
-            // check for interrupt ack and deassert int
-            if ( M1_n == 0 && IORQ_n == 0 && z80_irq_n == 0 ) begin
-                z80_irq_n <= 1;
-            end  
+        if ( clk_4M == 1 && z80_nmi_n == 0 && z80_addr == 16'h0066 ) begin
+            z80_nmi_n <= 1;
         end
     end
 end 
@@ -1271,6 +1279,7 @@ wire z80_wr_n;
 wire z80_rd_n;
 reg  z80_wait_n;
 reg  z80_irq_n;
+reg  z80_nmi_n;
 
 wire IORQ_n;
 wire MREQ_n;
@@ -1279,11 +1288,11 @@ wire M1_n;
 T80pa z80 (
     .RESET_n    ( ~reset ),
     .CLK        ( clk_sys ),
-    .CEN_p      ( clk_6M ),
-    .CEN_n      ( ~clk_6M ),
-    .WAIT_n     ( 1'b1 ), // z80_wait_n
-    .INT_n      ( z80_irq_n ),  
-    .NMI_n      ( 1'b1 ),
+    .CEN_p      ( clk_4M ),
+    .CEN_n      ( ~clk_4M ),
+    .WAIT_n     ( z80_wait_n ), // z80_wait_n
+    .INT_n      ( opl_irq_n ),  // opl_irq_n
+    .NMI_n      ( z80_nmi_n ),
     .BUSRQ_n    ( 1'b1 ),
     .RD_n       ( z80_rd_n ),
     .WR_n       ( z80_wr_n ),
@@ -1304,11 +1313,13 @@ T80pa z80 (
     .REG        ()
 );
 
+reg opl_wait ;
+
 always @ (posedge clk_sys) begin
 
     if ( reset == 1 ) begin
-        
-    end else if ( clk_6M == 1 ) begin
+         z80_wait_n <= 1;   
+    end else if ( clk_4M == 1 ) begin
         if ( z80_rd_n == 0 ) begin
         
             if ( z80_rom_cs == 1 ) begin
@@ -1322,13 +1333,27 @@ always @ (posedge clk_sys) begin
             if ( z80_latch_cs == 1 ) begin
                 z80_din <= sound_latch ;
             end  
+            
+            if ( z80_sound0_cs == 1 ) begin
+                sound_addr <= 0 ;
+                z80_din <= opl_dout;
+//                if ( z80_wait_n == 1 ) begin
+//                    // wait one clock
+//                    z80_wait_n <= 0;
+//                end else begin
+//                    // needs to wait to read
+//                    z80_din <= opl_dout; 
+//                    // reset wait
+//                    z80_wait_n <= 1;
+//                end
+            end
         end
         
         sound_wr <= 0 ;
         if ( z80_wr_n == 0 ) begin 
             if ( z80_sound0_cs == 1 || z80_sound1_cs == 1) begin    
                 sound_data  <= z80_dout;
-                sound_addr <= z80_sound1_cs ; 
+                sound_addr <= z80_sound1_cs ;
                 sound_wr <= 1;
             end 
         end        
@@ -1358,10 +1383,10 @@ wire opl_sample_clk;
 jtopl #(.OPL_TYPE(2)) opl
 (
     .rst(reset),
-    .clk(clk_6M),
+    .clk(clk_4M),
     .cen(1'b1),
     .din(sound_data),
-    .addr(sound_addr),
+    .addr(z80_sound1_cs),
     .cs_n(~( z80_sound0_cs | z80_sound1_cs )),
     .wr_n(~sound_wr),
     .dout(opl_dout),
@@ -1372,8 +1397,10 @@ jtopl #(.OPL_TYPE(2)) opl
 
 always @ * begin
     // mix audio
-    AUDIO_L <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
-    AUDIO_R <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
+    AUDIO_L <= sample ;
+    AUDIO_R <= sample ;
+//    AUDIO_L <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
+//    AUDIO_R <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
 end
 
 reg [7:0] dac1;
@@ -1574,7 +1601,7 @@ dual_port_ram #(.LEN(1024)) tile_pal_l (
     
 //z80 program rom    
 dual_port_ram #(.LEN(65536)) z80_rom (
-    .clock_a ( clk_6M ),
+    .clock_a ( clk_4M ),
     .address_a ( z80_addr[15:0] ),
     .wren_a ( 1'b0 ),
     .data_a ( ),
@@ -1589,7 +1616,7 @@ dual_port_ram #(.LEN(65536)) z80_rom (
     
 // z80 ram 
 dual_port_ram #(.LEN(2048)) z80_ram (
-    .clock_b ( clk_6M ), 
+    .clock_b ( clk_4M ), 
     .address_b ( z80_addr[10:0] ),
     .wren_b ( z80_ram_cs & ~z80_wr_n ),
     .data_b ( z80_dout ),
