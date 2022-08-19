@@ -3,6 +3,7 @@ set_global_assignment -name SYSTEMVERILOG_FILE prehisle.sv
 set_global_assignment -name QIP_FILE rtl/t80/T80.qip
 set_global_assignment -name QIP_FILE rtl/fx86k/fx68k.qip
 set_global_assignment -name QIP_FILE rtl/jtopl/hdl/jt26.qip
+set_global_assignment -name QIP_FILE rtl/jt7759/hdl/jt7759.qip
 set_global_assignment -name VERILOG_FILE rtl/video_timing.v
 set_global_assignment -name QIP_FILE sys/pll_q17.qip
 set_global_assignment -name QIP_FILE sys/pll_hdmi.qip

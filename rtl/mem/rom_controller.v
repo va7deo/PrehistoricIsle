@@ -226,9 +226,9 @@ segment
 
 segment 
 #(
-    .ROM_ADDR_WIDTH(17),    // 0x20000 x 8 words = 128k
+    .ROM_ADDR_WIDTH(17),    // 0x20000 x 8 words = 128k // upd7759 samples
     .ROM_DATA_WIDTH(8),
-    .ROM_OFFSET(24'h0c0000)
+    .ROM_OFFSET(24'h0d0000)
 ) sound_rom_segment
 (
     .reset(reset),
@@ -299,6 +299,7 @@ assign text_rom_data_valid    = text_rom_cs   & ( text_rom_ctrl_hit   | (pending
 assign fg_rom_data_valid      = fg_rom_cs     & ( fg_rom_ctrl_hit     | (pending_rom == FG_ROM     ? sdram_valid : 0) ) & ~reset;
 assign bg_rom_data_valid      = bg_rom_cs     & ( bg_rom_ctrl_hit     | (pending_rom == BG_ROM     ? sdram_valid : 0) ) & ~reset;
 assign sprite_rom_data_valid  = sprite_rom_cs & ( sprite_rom_ctrl_hit | (pending_rom == SPRITE_ROM ? sdram_valid : 0) ) & ~reset;
+assign sound_rom_data_valid   = sound_rom_cs  & ( sound_rom_ctrl_hit  | (pending_rom == SOUND_ROM  ? sdram_valid : 0) ) & ~reset;
 
 always @ (*) begin
 
@@ -311,23 +312,24 @@ always @ (*) begin
         fg_rom_ctrl_req:        next_rom <= FG_ROM;
         bg_rom_ctrl_req:        next_rom <= BG_ROM;        
         sprite_rom_ctrl_req:    next_rom <= SPRITE_ROM;
+        sound_rom_ctrl_req:     next_rom <= SOUND_ROM;
     endcase
 
     // route SDRAM acknowledge wire to the current ROM
     prog_rom_ctrl_ack <= 0;
-//    sound_rom_1_ctrl_ack <= 0;
     text_rom_ctrl_ack <= 0;
     fg_rom_ctrl_ack <= 0;
     bg_rom_ctrl_ack <= 0;
     sprite_rom_ctrl_ack <= 0;
+    sound_rom_ctrl_ack <= 0;
 
     case (rom)
         PROG_ROM:       prog_rom_ctrl_ack <= sdram_ack;
-//        SOUND_ROM_1:    sound_rom_1_ctrl_ack <= sdram_ack;
         TEXT_ROM:       text_rom_ctrl_ack <= sdram_ack;
         FG_ROM:         fg_rom_ctrl_ack <= sdram_ack;
         BG_ROM:         bg_rom_ctrl_ack <= sdram_ack;
         SPRITE_ROM:     sprite_rom_ctrl_ack <= sdram_ack;
+        SOUND_ROM:      sound_rom_ctrl_ack <= sdram_ack;
     endcase
 
     
@@ -337,15 +339,15 @@ always @ (*) begin
     fg_rom_ctrl_valid    <= 0;
     bg_rom_ctrl_valid    <= 0;
     sprite_rom_ctrl_valid  <= 0;
-//    sound_rom_1_ctrl_valid <= 0;
+    sound_rom_ctrl_valid  <= 0;
 
     case (pending_rom)
         PROG_ROM:       prog_rom_ctrl_valid  <= sdram_valid;
-//        SOUND_ROM_1:    sound_rom_1_ctrl_valid <= sdram_valid;
         TEXT_ROM:       text_rom_ctrl_valid  <= sdram_valid;
         FG_ROM:         fg_rom_ctrl_valid    <= sdram_valid;
         BG_ROM:         bg_rom_ctrl_valid    <= sdram_valid;        
         SPRITE_ROM:     sprite_rom_ctrl_valid  <= sdram_valid;
+        SOUND_ROM:      sound_rom_ctrl_valid  <= sdram_valid;
     endcase
 
 
@@ -354,19 +356,19 @@ always @ (*) begin
                 text_rom_ctrl_req |
                 fg_rom_ctrl_req |
                 bg_rom_ctrl_req |
+                sound_rom_ctrl_req |
                 sprite_rom_ctrl_req ;
-//                | sound_rom_1_ctrl_req;
 
      // mux SDRAM address in priority order
      sdram_addr <= 0;
      case (1)
         ioctl_download:         sdram_addr <= download_addr;
         prog_rom_ctrl_req:      sdram_addr <= prog_rom_ctrl_addr;
-        //sound_rom_1_ctrl_req:   sdram_addr <= sound_rom_1_ctrl_addr;
         text_rom_ctrl_req:      sdram_addr <= text_rom_ctrl_addr;
         fg_rom_ctrl_req:        sdram_addr <= fg_rom_ctrl_addr;
         bg_rom_ctrl_req:        sdram_addr <= bg_rom_ctrl_addr;
         sprite_rom_ctrl_req:    sdram_addr <= sprite_rom_ctrl_addr;
+        sound_rom_ctrl_req:     sdram_addr <= sound_rom_ctrl_addr;
      endcase 
      
     // set SDRAM data input

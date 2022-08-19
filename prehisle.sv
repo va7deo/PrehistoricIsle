@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXXX         XXX XXXXXXXX     XXXXX                       
+// X  XXXXXXX X        XXX XXXXXXXX    XXXXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -212,9 +212,8 @@ wire [2:0]  scan_lines = status[6:4];
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
 
-wire key_test_en = (status[36] | key_test);
 wire gfx1_en = ~(status[37] | key_txt_enable);
-wire gfx2_en = ~(status[38] | key_fg_enable);
+wire gfx2_en = ~(status[38] | key_fg_enable );
 wire gfx3_en = ~(status[39] | key_bg_enable);
 wire gfx4_en = ~(status[40] | key_spr_enable);
 
@@ -223,7 +222,7 @@ assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd3 : 8'd4) : 12'd0;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-    "prehisle;;",
+    "Prehistoric Isle;;",
     "-;",
     "P1,Video Settings;",
     "P1-;",
@@ -246,7 +245,9 @@ localparam CONF_STR = {
     "-;",
     "P3,PCB & Debug Settings;",
     "P3-;",
-    "P3o4,Service Menu,Off,On;",
+    "P3OB,Turbo (Legion Sets),Off,On;",    
+    "P3o3,Service Menu,Off,On;",
+    "P3o4,Debug Menu,Off,On;",
     "P3-;",
     "P3o5,Text Layer,On,Off;",
     "P3o6,Foreground Layer,On,Off;",
@@ -330,55 +331,55 @@ end
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
-reg [15:0] p1;   // PORT_START("P1")
-reg [15:0] p2;   // PORT_START("P2")
-reg [15:0] dsw1; // PORT_START("DSW0")
-reg [15:0] dsw2; // PORT_START("DSW1")
-reg [15:0] coin; // PORT_START("COIN")
-reg p1_invert;
+reg [15:0] p1 ;
+reg [15:0] p2 ;
+reg [15:0] dsw1 ;
+reg [15:0] dsw2 ;
+reg [15:0] coin ;
+reg [15:0] sys ;
 
-always @ (posedge clk_sys ) begin
+always @ (posedge clk_sys ) begin 
     p1 <= 16'hffff;
-    p1[7:0] <= { 8 {p1_invert} } ^ ~{ start1, p1_buttons[2:0], p1_right, p1_left, p1_down, p1_up};
-
+    p1[7:0] <= ~{ start1, p1_buttons[2:0], p1_right, p1_left ,p1_down, p1_up};
+     
     p2 <= 16'hffff;
-    p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left , p2_down, p2_up};
-
+    p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left ,p2_down, p2_up};
+    
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 11'h7ff, key_tilt, key_test, key_service, coin_b, coin_a };
+    coin <=  { 14'hffff, coin_b, coin_a };
 end
 
-wire        p1_right   = joy0[0]   | key_p1_right;
-wire        p1_left    = joy0[1]   | key_p1_left;
-wire        p1_down    = joy0[2]   | key_p1_down;
-wire        p1_up      = joy0[3]   | key_p1_up;
-wire [2:0]  p1_buttons = joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
+wire        p1_right   = joy0[0] | key_p1_right;
+wire        p1_left    = joy0[1] | key_p1_left;
+wire        p1_down    = joy0[2] | key_p1_down;
+wire        p1_up      = joy0[3] | key_p1_up;
+wire [3:0]  p1_buttons = joy0[7:4] | {key_p1_d, key_p1_c, key_p1_b, key_p1_a};
 
-wire        p2_right   = joy1[0]   | key_p2_right;
-wire        p2_left    = joy1[1]   | key_p2_left;
-wire        p2_down    = joy1[2]   | key_p2_down;
-wire        p2_up      = joy1[3]   | key_p2_up;
-wire [2:0]  p2_buttons = joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
+wire        p2_right   = joy1[0] | key_p2_right;
+wire        p2_left    = joy1[1] | key_p2_left;
+wire        p2_down    = joy1[2] | key_p2_down;
+wire        p2_up      = joy1[3] | key_p2_up | status[36];
+wire [3:0]  p2_buttons = joy1[7:4] | {key_p2_d, key_p2_c, key_p2_b | status[36], key_p2_a | status[36]};
 
-wire        start1     = joy0[7]   | joy1[7]    | key_start_1p;
-wire        start2     = joy0[8]   | joy1[8]    | key_start_2p;
-wire        coin_a     = joy0[9]   | joy1[9]    | key_coin_a;
-wire        coin_b     = joy0[10]  | joy1[10]   | key_coin_b;
-wire        b_pause    = joy0[11]  | key_pause;
+wire        start1  = joy0[8]  | joy1[8]  | key_start_1p;
+wire        start2  = joy0[9]  | joy1[9]  | key_start_2p | status[11];
+wire        coin_a  = joy0[10] | joy1[10] | key_coin_a;
+wire        coin_b  = joy0[11] | joy1[11] | key_coin_b;
+wire        b_pause = joy0[12] | key_pause ;
 
 // Keyboard handler
 
 wire key_start_1p, key_start_2p, key_coin_a, key_coin_b;
-wire key_reset, key_test, key_service, key_pause, key_tilt;
+wire key_test, key_reset, key_service, key_pause;
 wire key_txt_enable, key_fg_enable, key_bg_enable, key_spr_enable;
 
-wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c;
-wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c;
+wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
+wire key_p2_up, key_p2_left, key_p2_down, key_p2_right, key_p2_a, key_p2_b, key_p2_c, key_p2_d;
 
 wire pressed = ps2_key[9];
 
-always @(posedge clk_sys) begin
+always @(posedge clk_sys) begin 
     reg old_state;
 
     old_state <= ps2_key[10];
@@ -391,7 +392,6 @@ always @(posedge clk_sys) begin
             'h006: key_test       <= key_test ^ pressed; // f2
             'h004: key_reset      <= pressed; // f3
             'h046: key_service    <= pressed; // 9
-            'h02c: key_tilt       <= pressed; // t
             'h04D: key_pause      <= pressed; // p
 
             'hX75: key_p1_up      <= pressed; // up
@@ -401,6 +401,7 @@ always @(posedge clk_sys) begin
             'h014: key_p1_a       <= pressed; // lctrl
             'h011: key_p1_b       <= pressed; // lalt
             'h029: key_p1_c       <= pressed; // spacebar
+            'h012: key_p1_d       <= pressed; // lshift
 
             'h02d: key_p2_up      <= pressed; // r
             'h02b: key_p2_down    <= pressed; // f
@@ -409,6 +410,7 @@ always @(posedge clk_sys) begin
             'h01c: key_p2_a       <= pressed; // a
             'h01b: key_p2_b       <= pressed; // s
             'h015: key_p2_c       <= pressed; // q
+            'h01d: key_p2_d       <= pressed; // w
 
             'h083: key_txt_enable <= key_txt_enable ^ pressed; // f7
             'h00A: key_bg_enable  <= key_bg_enable  ^ pressed; // f8
@@ -418,14 +420,12 @@ always @(posedge clk_sys) begin
     end
 end
 
-
-
 reg user_flip;
 
 wire pll_locked;
 
 wire clk_sys;
-reg  clk_4M,clk_6M,clk_9M,clk_18M;
+reg  clk_4M,clk_6M,clk_9M,clk_18M,clk_upd;
 
 wire clk_72M;
 
@@ -446,7 +446,7 @@ reg [5:0] clk18_count;
 reg [5:0] clk9_count;
 reg [5:0] clk6_count;
 reg [5:0] clk4_count;
-reg [15:0] clk_ym_count;
+reg [15:0] clk_upd_count;
 
 
 always @ (posedge clk_sys) begin
@@ -482,7 +482,16 @@ always @ (posedge clk_sys) begin
     end else if ( pause_cpu == 0 ) begin
         clk9_count <= clk9_count + 1;
     end
-    
+
+    clk_upd <= ( clk_upd_count == 0 );
+
+    // 72MHz / 113 == 637.168KHz.  should be 640.
+    // todo : use fractional divider 112.5  alternate between 112 & 113
+    if ( clk_upd_count == 112 ) begin    
+        clk_upd_count <= 0;
+    end else if ( pause_cpu == 0 ) begin
+        clk_upd_count <= clk_upd_count + 1;
+    end    
 end
 
 wire    reset;
@@ -1349,12 +1358,34 @@ always @ (posedge clk_sys) begin
         
         sound_wr <= 0 ;
         if ( z80_wr_n == 0 ) begin 
+            // OPL2
             if ( z80_sound0_cs == 1 || z80_sound1_cs == 1) begin    
                 sound_data  <= z80_dout;
                 sound_addr <= z80_sound1_cs ;
                 sound_wr <= 1;
             end 
+            
+            // 7759
+            if ( z80_upd_cs == 1 ) begin
+                upd_din <= z80_dout ;
+                upd_start_n <= 1 ;
+                // need a pulse to trigger the 7759 start
+                upd_start_flag <= 1;
+            end
+            
+            if ( upd_start_flag == 1 ) begin
+                upd_start_n <= 0 ;
+                upd_start_flag <= 0;
+            end
+            
+            if ( z80_upd_r_cs == 1 ) begin
+                upd_reset <= 1;
+            end else begin
+                upd_reset <= 0;
+            end
+
         end        
+       
     end
 end 
 
@@ -1371,6 +1402,9 @@ wire [7:0] opl_dout;
 wire opl_irq_n;
 
 reg signed [15:0] sample;
+
+wire signed  [8:0] upd_sample_out;
+wire signed [15:0] upd_sample = { upd_sample_out[8], upd_sample_out[8], upd_sample_out, 5'b0 }; 
 
 assign AUDIO_S = 1'b1 ;
 
@@ -1393,10 +1427,40 @@ jtopl #(.OPL_TYPE(2)) opl
     .sample(opl_sample_clk)
 );
 
+reg [7:0] upd_din;
+reg upd_reset ;
+reg upd_start_n ;
+reg upd_start_flag ;
+
+jt7759 upd 
+(
+    .rst( reset | upd_reset ),
+    .clk(clk_sys),  // Use same clock as sound CPU
+    .cen(clk_upd),  // 640kHz
+    .stn(upd_start_n),  // STart (active low)
+    .cs(1'b1),
+    .mdn(1'b1),  // MODE: 1 for stand alone mode, 0 for slave mode
+                                 // see chart in page 13 of PDF
+    .busyn(),
+    // CPU interface
+    .wrn(1'b1),  // for slave mode only, 31.7us after drqn is set
+    .din(upd_din),
+    .drqn(),  // data request. 50-70us delay after mdn goes low
+    
+    // ROM interface
+    .rom_cs(upd_rom_cs),        // equivalent to DRQn in original chip
+    .rom_addr(upd_addr),  // output        [16:0]
+    .rom_data(upd_rom_data),  // input         [ 7:0]   
+    .rom_ok(upd_rom_valid),
+    
+    // Sound output
+    .sound(upd_sample_out)  //output signed [ 8:0]
+);
+
 always @ * begin
     // mix audio
     AUDIO_L <= sample ;
-    AUDIO_R <= sample ;
+    AUDIO_R <= upd_sample ;
 //    AUDIO_L <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
 //    AUDIO_R <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
 end
@@ -1625,19 +1689,19 @@ reg [16:0] upd_addr ;
 wire [7:0] upd_dout ;
 
 //adpcm sample rom    
-dual_port_ram #(.LEN(131072)) upd_rom (
-    .clock_a ( clk_sys ),
-    .address_a ( upd_addr[16:0] ),
-    .wren_a ( 1'b0 ),
-    .data_a ( ),
-    .q_a ( upd_dout[7:0] ),
-    
-    .clock_b ( clk_sys ),
-    .address_b ( ioctl_addr[16:0] ),
-    .wren_b ( upd_ioctl_wr ),
-    .data_b ( ioctl_dout  ),
-    .q_b( )
-    );
+//dual_port_ram #(.LEN(131072)) upd_rom (
+//    .clock_a ( clk_sys ),
+//    .address_a ( upd_addr[16:0] ),
+//    .wren_a ( 1'b0 ),
+//    .data_a ( ),
+//    .q_a ( upd_dout[7:0] ),
+//    
+//    .clock_b ( clk_sys ),
+//    .address_b ( ioctl_addr[16:0] ),
+//    .wren_b ( upd_ioctl_wr ),
+//    .data_b ( ioctl_dout  ),
+//    .q_b( )
+//    );
     
 //reg  [15:0] bg_tilemap_addr ;
 //wire [15:0] bg_tilemap_dout ;
@@ -1786,6 +1850,11 @@ wire [31:0] txt_rom_data;
 reg txt_rom_cs;
 wire txt_rom_valid;
 
+reg  [16:0] upd_rom_addr;
+wire  [7:0] upd_rom_data;
+wire        upd_rom_cs;
+wire        upd_rom_valid;
+
 assign m68k_rom_valid = 1;
 
 dual_port_ram #(.LEN(131072)) m68k_rom_h (
@@ -1889,12 +1958,12 @@ rom_controller rom_controller
     .text_rom_data(txt_rom_data),
     .text_rom_data_valid(txt_rom_valid),       
     
-    // sound ROM #1 interface
-//    .sound_rom_cs(z80_rom_cs),
-//    .sound_rom_oe(1),
-//    .sound_rom_addr(z80_addr),
-//    .sound_rom_data(z80_rom_data),
-//    .sound_rom_data_valid(z80_rom_valid),    
+    // sound samples ROM interface
+    .sound_rom_cs(upd_rom_cs),
+    .sound_rom_oe(1),
+    .sound_rom_addr(upd_addr),
+    .sound_rom_data(upd_rom_data),
+    .sound_rom_data_valid(upd_rom_valid),   
 
     // IOCTL interface
     .ioctl_addr(ioctl_addr),
