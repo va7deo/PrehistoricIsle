@@ -514,10 +514,15 @@ wire [8:0] vc;
 wire hsync;
 wire vsync;
 
-wire hbl_delay, vbl_delay;
+reg hbl_delay, vbl_delay;
 
-assign hbl_delay = hbl ;
-assign vbl_delay = vbl ;
+//assign  hbl_delay = hbl ;
+//assign  vbl_delay = vbl ;
+
+always @ ( posedge clk_6M ) begin
+    hbl_delay <= hbl ;
+    vbl_delay <= vbl ;
+end
 
 video_timing video_timing (
     .clk(clk_6M),
@@ -615,14 +620,14 @@ reg [4:0] tile_state;
 reg [4:0] sprite_state;
 reg [8:0] sprite_num;
 
-reg  [8:0] x;
-wire [8:0] tx_x = x ;
-wire [8:0] tx_y = vc ;
-
 reg   [2:0] pri_buf[0:255];
  
 reg  [31:0] pix_data;
 reg  [31:0] spr_pix_data;
+
+reg  [8:0] x;
+wire [8:0] tx_x = x ;
+wire [8:0] tx_y = vc ;
 
 wire [13:0] fg_x = x  + fg_scroll_x ;
 wire  [8:0] fg_y = vc + fg_scroll_y ;
@@ -667,7 +672,7 @@ always @ (posedge clk_sys) begin
                 tile_state <= 6 ;
             end
         end else if ( tile_state == 6) begin 
-            pri_buf[x] <= 1;
+//            pri_buf[x] <= 1;
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_tx_w <= 1;
             case ( x[2:0] )
@@ -680,16 +685,16 @@ always @ (posedge clk_sys) begin
                 6: line_buf_din <= { txt_ram_dout[15:12], pix_data[7:4] }; 
                 7: line_buf_din <= { txt_ram_dout[15:12], pix_data[3:0] }; 
             endcase
-            if ( x < 255 ) begin
+            if ( x < 256 ) begin
                 if ( x[2:0] == 3'b111 ) begin
                     tile_state <= 1;
                 end
                 x <= x + 1;
             end else begin
                 tile_state <= 7;
+                line_buf_tx_w <= 0;
             end
         end else if ( tile_state == 7) begin             
-            line_buf_tx_w <= 0;
             x <= 0;
             tile_state <= 11;
 
@@ -727,16 +732,16 @@ always @ (posedge clk_sys) begin
                 6: line_buf_din <= { fg_ram_dout[15:12], pix_data[7:4] }; 
                 7: line_buf_din <= { fg_ram_dout[15:12], pix_data[3:0] }; 
             endcase
-            if ( x < 255 ) begin
+            if ( x < 256 ) begin
                 if ( fg_x[2:0] == 3'b111 ) begin // if ( x[2:0] == 3'b111 ) begin
                     tile_state <= 11;
                 end
                 x <= x + 1;
             end else begin
                 tile_state <= 17;
+                line_buf_fg_w <= 0;
             end
         end else if ( tile_state == 17) begin   
-            line_buf_fg_w <= 0;
             tile_state <= 21;    
             x <= 0;  
         // bg
@@ -774,16 +779,16 @@ always @ (posedge clk_sys) begin
                 6: line_buf_din <= { tilemap_rom_data[15:12], pix_data[7:4] }; 
                 7: line_buf_din <= { tilemap_rom_data[15:12], pix_data[3:0] }; 
             endcase
-            if ( x < 255 ) begin
+            if ( x < 256 ) begin
                 if ( bg_x[2:0] == 3'b111 ) begin // if ( x[2:0] == 3'b111 ) begin
                     tile_state <= 21;
                 end
                 x <= x + 1;
             end else begin
                 tile_state <= 27;
+                line_buf_bg_w <= 0;
             end
         end else if ( tile_state == 27) begin   
-            line_buf_bg_w <= 0;
             tile_state <= 0;      
             
         end
@@ -865,7 +870,6 @@ always @ (posedge clk_sys) begin
         end else if ( sprite_state == 10 ) begin                    
             spr_buf_addr_w <= { vc[0], spr_x_pos };
             case ( { 3 { spr_flip_x } } ^ spr_x_ofs[2:0] ) // case ( x[2:0] )
-            //case ( spr_x_ofs[2:0] ) // case ( x[2:0] )
                 0: spr_buf_din <= { sprite_colour, spr_pix_data[31:28] }; 
                 1: spr_buf_din <= { sprite_colour, spr_pix_data[27:24] }; 
                 2: spr_buf_din <= { sprite_colour, spr_pix_data[23:20] }; 
@@ -877,22 +881,20 @@ always @ (posedge clk_sys) begin
             endcase 
             sprite_state <= 16;
         end else if ( sprite_state == 16 ) begin
-              spr_buf_w <= ( spr_buf_din[3:0] < 15 );
-//            spr_buf_addr_w <= { vc[0], spr_x_pos };
-            if ( spr_x_ofs < 16 ) begin
-//                spr_buf_din <= 1 ;
-//                spr_buf_w <= 1 ;
+            spr_buf_w <= ( spr_buf_din[3:0] < 15 );
+
+            if ( spr_x_ofs < 15 ) begin
                 sprite_state <= 17;
             end else begin
-                spr_buf_w <= 0;
                 sprite_state <= 31;
             end
         end else if ( sprite_state == 17 ) begin
+            spr_buf_w <= 0 ;
             spr_x_ofs <= spr_x_ofs + 1 ;
             spr_x_pos <= spr_x_pos + 1 ;
             sprite_state <= 8;
         end else if ( sprite_state == 31 ) begin
-//            spr_buf_w <= 0;
+            spr_buf_w <= 0;
             if ( sprite_num < 256 ) begin
                 // next sprite
                 sprite_num <= sprite_num + 1 ;
@@ -944,33 +946,11 @@ reg [23:0] rgb_fg;
 reg [23:0] rgb_bg;
 reg [23:0] rgb_sp;
 
-//always @ (posedge clk_sys) begin
-//    if ( reset == 1 ) begin
-//    end else if ( clk_6M == 1 ) begin
-//        if ( hc < 256 ) begin
-//            line_buf_addr_r <= { ~vc[0], hc[8:0] };
-//
-//            tx <= line_buf_tx_out[3:0] ;
-//            fg <= line_buf_fg_out[3:0] ;
-//            bg <= line_buf_bg_out[3:0] ;
-//            
-//            rgb <= { pal3[bg][11:8],4'h0,pal3[bg][7:4],4'h0,pal3[bg][3:0],4'h0 };
-//
-//            if ( fg < 15 ) begin
-//                rgb <= { pal2[fg][11:8],4'h0,pal2[fg][7:4],4'h0,pal2[fg][3:0],4'h0 };
-//            end
-//            
-//            if ( tx < 15 ) begin
-//                rgb <= { pal[tx][11:8],4'h0,pal[tx][7:4],4'h0,pal[tx][3:0],4'h0 };
-//            end
-//        end
-//    end
-//end
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
     end else begin
-        if ( hc < 256 ) begin
+        if ( hc < 257 ) begin
             if ( clk6_count == 1 ) begin
                 line_buf_addr_r <= { ~vc[0], hc[8:0] };
             end else if ( clk6_count == 2 ) begin
@@ -978,6 +958,7 @@ always @ (posedge clk_sys) begin
                 fg <= line_buf_fg_out[7:0] ;
                 bg <= line_buf_bg_out[7:0] ;
                 sp <= spr_buf_dout[7:0] ;
+                rgb <= 0;
             end else if ( clk6_count == 3 ) begin                
                 tile_pal_addr <= 12'd768 + bg ;
             end else if ( clk6_count == 5 ) begin                
@@ -1001,6 +982,9 @@ always @ (posedge clk_sys) begin
                 end
                 if ( tx[3:0] < 15 ) begin
                     rgb <= rgb_tx;
+                end
+                if ( hc == 256 ) begin
+                    rgb <= 0;
                 end
             end
             
