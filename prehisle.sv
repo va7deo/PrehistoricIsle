@@ -212,10 +212,10 @@ wire [2:0]  scan_lines = status[6:4];
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
 
-wire gfx1_en = ~(status[37] | key_txt_enable);
-wire gfx2_en = ~(status[38] | key_fg_enable );
-wire gfx3_en = ~(status[39] | key_bg_enable);
-wire gfx4_en = ~(status[40] | key_spr_enable);
+wire gfx_tx_en = ~(status[37] | key_txt_enable);
+wire gfx_fg_en = ~(status[38] | key_fg_enable );
+wire gfx_bg_en = ~(status[39] | key_bg_enable);
+wire gfx_sp_en = ~(status[40] | key_spr_enable);
 
 assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 8'd4 : 8'd3) : (aspect_ratio - 1'd1);
 assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd3 : 8'd4) : 12'd0;
@@ -946,9 +946,12 @@ reg [23:0] rgb_fg;
 reg [23:0] rgb_bg;
 reg [23:0] rgb_sp;
 
+reg [11:0] pen;
+reg pen_valid;
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
+	
     end else begin
         if ( hc < 257 ) begin
             if ( clk6_count == 1 ) begin
@@ -959,39 +962,38 @@ always @ (posedge clk_sys) begin
                 bg <= line_buf_bg_out[7:0] ;
                 sp <= spr_buf_dout[7:0] ;
                 rgb <= 0;
-            end else if ( clk6_count == 3 ) begin                
-                tile_pal_addr <= 12'd768 + bg ;
+                pen_valid <= 0;
+            end else if ( clk6_count == 3 ) begin   
+                // priority
+                if ( gfx_bg_en == 1 ) begin
+                    pen <= 12'd768 + bg[7:0];
+                    pen_valid <= 1;
+                end
+                
+                if ( fg[3:0] < 15 && gfx_fg_en == 1 ) begin
+                    pen <= 12'd512 + fg[7:0];
+                    pen_valid <= 1;
+                end
+                if ( sp[3:0] < 15 && gfx_sp_en == 1 ) begin
+                    pen <= 12'd256 + sp[7:0];
+                    pen_valid <= 1;
+                end
+                if ( tx[3:0] < 15 && gfx_tx_en == 1 ) begin
+                    pen <= tx[7:0];
+                    pen_valid <= 1;
+                end
+            
             end else if ( clk6_count == 5 ) begin                
-                rgb_bg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-                tile_pal_addr <= 12'd512 + fg ;
+                tile_pal_addr <= pen ;
             end else if ( clk6_count == 7 ) begin                
-                rgb_fg <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-                tile_pal_addr <= tx ;
-            end else if ( clk6_count == 9 ) begin                
-                rgb_tx <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-                tile_pal_addr <= 12'd256 + sp ;
-            end else if ( clk6_count == 11 ) begin                
-                rgb_sp <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
-            end else if ( clk6_count == 0  ) begin                                
-                rgb <= rgb_bg;
-                if ( fg[3:0] < 15 ) begin
-                    rgb <= rgb_fg;
-                end
-                if ( sp[3:0] < 15 ) begin
-                    rgb <= rgb_sp;
-                end
-                if ( tx[3:0] < 15 ) begin
-                    rgb <= rgb_tx;
-                end
-                if ( hc == 256 ) begin
-                    rgb <= 0;
+                if ( hc < 256 && pen_valid == 1 ) begin
+                    rgb <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
                 end
             end
             
         end
     end
 end
-
 
 /// 68k cpu
 
