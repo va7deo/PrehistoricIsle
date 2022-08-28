@@ -329,23 +329,23 @@ end
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
-reg [15:0] p1 ;
-reg [15:0] p2 ;
-reg [15:0] dsw1 ;
-reg [15:0] dsw2 ;
-reg [15:0] coin ;
-reg [15:0] sys ;
+reg [15:0] p1;    // PORT_START ("P1")
+reg [15:0] p2;    // PORT_START ("P2")
+reg [15:0] dsw1;  // PORT_START ("DSW0")
+reg [15:0] dsw2;  // PORT_START ("DSW1")
+reg [15:0] coin;  // PORT_START ("COIN")
+reg p1_invert;    // { return m_io_p1->read() ^ m_invert_controls; }
 
 always @ (posedge clk_sys ) begin 
     p1 <= 16'hffff;
-    p1[7:0] <= ~{ start1, p1_buttons[2:0], p1_right, p1_left ,p1_down, p1_up};
-     
+    p1[7:0] <= { 8 {p1_invert} } ^ ~{ start1, p1_buttons[2:0], p1_right, p1_left , p1_down, p1_up};
+    
     p2 <= 16'hffff;
     p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left ,p2_down, p2_up};
     
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 12'hffff, key_test, key_service, coin_b, coin_a };
+    coin <=  { 10'h3ff, 1'b0, ~key_tilt, key_test, ~key_service, ~coin_b, ~coin_a };
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
@@ -365,11 +365,12 @@ wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
 wire        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
 wire        coin_b  = joy0[10] | joy1[10] | key_coin_b;
 wire        b_pause = joy0[11] | key_pause;
+wire        service = joy0[12] | key_test | status[35];
 
 // Keyboard handler
 
 wire key_start_1p, key_start_2p, key_coin_a, key_coin_b;
-wire key_test, key_reset, key_service, key_pause;
+wire key_tilt, key_test, key_reset, key_service, key_pause;
 wire key_txt_enable, key_fg_enable, key_bg_enable, key_spr_enable;
 
 wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
@@ -387,9 +388,10 @@ always @(posedge clk_sys) begin
             'h01e: key_start_2p   <= pressed; // 2
             'h02E: key_coin_a     <= pressed; // 5
             'h036: key_coin_b     <= pressed; // 6
-            'h006: key_test       <= pressed; // f2
+            'h006: key_test       <= key_test ^ pressed; // f2
             'h004: key_reset      <= pressed; // f3
             'h046: key_service    <= pressed; // 9
+            'h02c: key_tilt       <= pressed; // t
             'h04D: key_pause      <= pressed; // p
 
             'hX75: key_p1_up      <= pressed; // up
