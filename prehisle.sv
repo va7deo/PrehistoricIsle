@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXX X        XXX XXXXXXXX    XXXXXX                       
+// X  XXXXXXX          XXX XXXXXXXX    X XXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -213,22 +213,22 @@ wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
 
 wire gfx_tx_en = ~(status[37] | key_txt_enable);
-wire gfx_fg_en = ~(status[38] | key_fg_enable );
+wire gfx_fg_en = ~(status[38] | key_fg_enable);
 wire gfx_bg_en = ~(status[39] | key_bg_enable);
 wire gfx_sp_en = ~(status[40] | key_spr_enable);
 
-assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 8'd4 : 8'd3) : (aspect_ratio - 1'd1);
-assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd3 : 8'd4) : 12'd0;
+assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 8'd8 : 8'd7) : (aspect_ratio - 1'd1);
+assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd7 : 8'd8) : 12'd0;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-    "Prehistoric Isle;;",
+    "prehisle;;",
     "-;",
     "P1,Video Settings;",
     "P1-;",
-    "P1O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
+    "P1O89,Aspect Ratio,Original,Full Screen,[ARC1],[ARC2];",
     "P1O3,Orientation,Horz,Vert;",
-    "P1-;",    
+    "P1-;",
     "P1O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%,CRT 100%;",
     "P1OA,Force Scandoubler,Off,On;",
     "P1-;",
@@ -245,9 +245,7 @@ localparam CONF_STR = {
     "-;",
     "P3,PCB & Debug Settings;",
     "P3-;",
-    "P3OB,Turbo (Legion Sets),Off,On;",    
     "P3o3,Service Menu,Off,On;",
-    "P3o4,Debug Menu,Off,On;",
     "P3-;",
     "P3o5,Text Layer,On,Off;",
     "P3o6,Foreground Layer,On,Off;",
@@ -347,26 +345,26 @@ always @ (posedge clk_sys ) begin
     
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 14'hffff, coin_b, coin_a };
+    coin <=  { 12'hffff, key_test, key_service, coin_b, coin_a };
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
 wire        p1_left    = joy0[1] | key_p1_left;
 wire        p1_down    = joy0[2] | key_p1_down;
 wire        p1_up      = joy0[3] | key_p1_up;
-wire [3:0]  p1_buttons = joy0[7:4] | {key_p1_d, key_p1_c, key_p1_b, key_p1_a};
+wire [2:0]  p1_buttons = joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
 wire        p2_right   = joy1[0] | key_p2_right;
 wire        p2_left    = joy1[1] | key_p2_left;
 wire        p2_down    = joy1[2] | key_p2_down;
-wire        p2_up      = joy1[3] | key_p2_up | status[36];
-wire [3:0]  p2_buttons = joy1[7:4] | {key_p2_d, key_p2_c, key_p2_b | status[36], key_p2_a | status[36]};
+wire        p2_up      = joy1[3] | key_p2_up;
+wire [2:0]  p2_buttons = joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
 
-wire        start1  = joy0[8]  | joy1[8]  | key_start_1p;
-wire        start2  = joy0[9]  | joy1[9]  | key_start_2p | status[11];
-wire        coin_a  = joy0[10] | joy1[10] | key_coin_a;
-wire        coin_b  = joy0[11] | joy1[11] | key_coin_b;
-wire        b_pause = joy0[12] | key_pause ;
+wire        start1  = joy0[7]  | joy1[7]  | key_start_1p;
+wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
+wire        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
+wire        coin_b  = joy0[10] | joy1[10] | key_coin_b;
+wire        b_pause = joy0[11] | key_pause;
 
 // Keyboard handler
 
@@ -389,7 +387,7 @@ always @(posedge clk_sys) begin
             'h01e: key_start_2p   <= pressed; // 2
             'h02E: key_coin_a     <= pressed; // 5
             'h036: key_coin_b     <= pressed; // 6
-            'h006: key_test       <= key_test ^ pressed; // f2
+            'h006: key_test       <= pressed; // f2
             'h004: key_reset      <= pressed; // f3
             'h046: key_service    <= pressed; // 9
             'h04D: key_pause      <= pressed; // p
@@ -433,7 +431,7 @@ pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
-    .outclk_0(clk_sys),    
+    .outclk_0(clk_sys),
     .outclk_1(clk_72M),
     .locked(pll_locked)
 );
@@ -951,7 +949,6 @@ reg pen_valid;
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
-	
     end else begin
         if ( hc < 257 ) begin
             if ( clk6_count == 1 ) begin
@@ -963,7 +960,7 @@ always @ (posedge clk_sys) begin
                 sp <= spr_buf_dout[7:0] ;
                 rgb <= 0;
                 pen_valid <= 0;
-            end else if ( clk6_count == 3 ) begin   
+            end else if ( clk6_count == 3 ) begin
                 // priority
                 if ( gfx_bg_en == 1 ) begin
                     pen <= 12'd768 + bg[7:0];
@@ -994,6 +991,7 @@ always @ (posedge clk_sys) begin
         end
     end
 end
+
 
 /// 68k cpu
 
@@ -2005,12 +2003,12 @@ sdram #(.CLK_FREQ( (CLKSYS+0.0))) sdram
   .sdram_dqml(SDRAM_DQML),
   .sdram_dqmh(SDRAM_DQMH)
 );    
-    
+
 endmodule
 
 module delay
 (
-    input clk,  
+    input clk,
     input i,
     output o
 );
@@ -2024,4 +2022,3 @@ always @(posedge clk) begin
 end
 
 endmodule
-
