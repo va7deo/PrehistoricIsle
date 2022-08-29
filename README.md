@@ -1,10 +1,11 @@
 
-
 # SNK M68000 (Prehistoric Isle in 1930) FPGA Implementation
 
-FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O). The intent is for this core to be a 1:1 playable implementation of the SNK (Prehistoric Isle in 1930 based) 68000 hardware. 
+FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O).
 
-Currently in an alpha state, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
+The intent is for this core to be a 1:1 playable implementation of Prehistoric Isle in 1930 arcade hardware.
+
+Currently in an **alpha state**, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
 
 <br>
 <p align="center">
@@ -19,21 +20,40 @@ Currently in an alpha state, this core is in active development with assistance 
 | [**fx68k**](https://github.com/ijor/fx68k)      | [**Motorola 68000 CPU**](https://en.wikipedia.org/wiki/Motorola_68000) | Jorge Cwik     |
 | [**t80**](https://opencores.org/projects/t80)   | [**Zilog Z80 CPU**](https://en.wikipedia.org/wiki/Zilog_Z80)           | Daniel Wallner |
 | [**jtopl2**](https://github.com/jotego/jtopl)   | [**Yamaha OPL 2**](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2)      | Jose Tejada    |
-| [**jt7759**](https://github.com/jotego/jt7759)  | **NEC uPD7759**                                                        | Jose Tejada    |
+| [**jt7759**](https://github.com/jotego/jt7759)  | [**NEC uPD7759**](https://github.com/jotego/jt7759)                    | Jose Tejada    |
 
 # Known Issues / Tasks
 
-- Audio issues known, may be an issue with the jtopl2 core or the current usage<br>(No need to report further audio issues)  
+- When test menu (diagnostics) is connected as an input the game hangs on "ALL MEMORY OK!"; occasionally pressing "F3" in the test menu will result in the game fully booting  
+- Wire service, test, and tilt; currently unstable  
+- Final stage shows the SNK logo from attract and inputs for joystick only function diagonally; clear after completing the stage  
+- Measure HBLANK, VBLANK, HSYNC, and VSYNC timings from PCB for analog output  
+- Transparency and layer priorities visible in attract mode (plane does not interleave with trees)  
+- Sprite layer needs to shift right one  
+- ~~One row of pixels/line missing from the right side of HVISIBLE~~  
+- ~~Update inputs for 2L3B; correct mapping~~  
+- ~~Correct H/V offset options to shift left, right, up, and down~~  
+- Audio issues known, may be an issue with the jtopl2 core or the current usage<br>(No need to report further audio issues; it appears there are no audio issues in this particular game for OPL2)  
 
 # PCB Check List
 
-- TBD
+FPGA implementation is based on [**mame source**](https://github.com/mamedev/mame/blob/master/src/mame/snk/prehisle.cpp) and will be verified against an authentic SNK Prehistoric Isle in 1930 PCB.
 
 ### Clock Information
 
-H-Sync      | V-Sync      |
-------------|-------------|
-15.625kHz   | 59.637404Hz |
+H-Sync      | V-Sync      | Source | Refresh Rate      |
+------------|-------------|--------|-------------------|
+15.625kHz   | 54.065743Hz | OSSC   | 15.61kHz / 54.1Hz |
+
+Until PCB measurements are taken, additional timing information can be found [**here**](https://user-images.githubusercontent.com/32810066/187164273-01cf0a2e-6eb4-47ce-ba79-830a7e977212.jpg) and [**here**](https://mametesters.org/view.php?id=5939).
+
+### Crystal Oscillators
+
+Location              | Freq (MHz) | Use                       |
+----------------------|------------|---------------------------|
+4MHZ (Top Board)      | 4.000      | Z80                       |
+18MHZ (Top Board)     | 18.000     | M68000 / YM3812 / uPD7759 |
+12MHz (Bottom Board)  | 12.000     | Pxl Clock                 |
 
 **Pixel clock:** 6.00 MHz
 
@@ -41,7 +61,7 @@ H-Sync      | V-Sync      |
 
     383 pixels/line
   
-    261 pixels/line
+    288 pixels/line
 
 ### Main Components
 
@@ -60,7 +80,7 @@ E14 (Top Board) | [**NEC uPD7759**](https://github.com/jotego/jt7759)           
 
 <br>
 
-<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Control Type</th></tr><tr><td><p align="center">Prehistoric Isle in 1930</p></td><td><p align="center">8-Way</p></td><td><p align="center"><img src="https://user-images.githubusercontent.com/32810066/184927270-92710d25-e63e-4cd9-b4a7-a7713e4532a2.png"></td><td><p align="center">Co-Op</td> </table>
+<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Control Type</th></tr><tr><td><p align="center">Prehistoric Isle in 1930</p></td><td><p align="center">8-Way</p></td><td><p align="center"><img src="https://user-images.githubusercontent.com/32810066/187161370-1d549928-996d-4f0b-9451-98f0a878ea3d.png"></td><td><p align="center">Co-Op</td> </table>
 
 <br>
 

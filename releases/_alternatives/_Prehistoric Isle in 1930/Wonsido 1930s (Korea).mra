@@ -22,7 +22,7 @@
         <dip name="Allow Continue" bits="14" ids="No,Yes"/>
     </switches>
 
-    <buttons names="Shot,Option,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,L,R,Start,Select"/>
+    <buttons names="Shot,Option,-,P1 Start,P2 Start,Coin A,Coin B,Pause" default="A,B,X,Y,R,L,Start"/>
 
     <rom index="0" zip="prehislek.zip|prehisle.zip" md5="None">
         <!-- maincpu - starts at 0x0 -->

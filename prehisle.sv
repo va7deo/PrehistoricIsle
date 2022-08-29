@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXX X        XXX XXXXXXXX    XXXXXX                       
+// X   XXXXXX          XXX XXXXXXXX      XXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -216,22 +216,22 @@ wire [3:0]  hs_width  = status[59:56];
 wire [3:0]  vs_width  = status[63:60];
 
 wire gfx_tx_en = ~(status[37] | key_txt_enable);
-wire gfx_fg_en = ~(status[38] | key_fg_enable );
+wire gfx_fg_en = ~(status[38] | key_fg_enable);
 wire gfx_bg_en = ~(status[39] | key_bg_enable);
 wire gfx_sp_en = ~(status[40] | key_spr_enable);
 
-assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 8'd4 : 8'd3) : (aspect_ratio - 1'd1);
-assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd3 : 8'd4) : 12'd0;
+assign VIDEO_ARX = (!aspect_ratio) ? (orientation  ? 8'd8 : 8'd7) : (aspect_ratio - 1'd1);
+assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd7 : 8'd8) : 12'd0;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-    "Prehistoric Isle;;",
+    "prehisle;;",
     "-;",
     "P1,Video Settings;",
     "P1-;",
-    "P1O89,Aspect ratio,Original,Full Screen,[ARC1],[ARC2];",
-    "P1O3,Orientation,Horz,Vert;",
-    "P1-;",    
+    "P1O89,Aspect Ratio,Original,Full Screen,[ARC1],[ARC2];",
+    //"P1O3,Orientation,Horz,Vert;",
+    "P1-;",
     "P1O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%,CRT 100%;",
     "P1OA,Force Scandoubler,Off,On;",
     "P1-;",
@@ -248,11 +248,7 @@ localparam CONF_STR = {
     "P2OK,Pause when OSD is open,Off,On;",
     "P2OL,Dim video after 10s,Off,On;",
     "-;",
-    "P3,PCB & Debug Settings;",
-    "P3-;",
-    "P3OB,Turbo (Legion Sets),Off,On;",    
-    "P3o3,Service Menu,Off,On;",
-    "P3o4,Debug Menu,Off,On;",
+    "P3,Debug Settings;",
     "P3-;",
     "P3o5,Text Layer,On,Off;",
     "P3o6,Foreground Layer,On,Off;",
@@ -336,47 +332,49 @@ end
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
-reg [15:0] p1 ;
-reg [15:0] p2 ;
-reg [15:0] dsw1 ;
-reg [15:0] dsw2 ;
-reg [15:0] coin ;
-reg [15:0] sys ;
+reg [15:0] p1;    // PORT_START ("P1")
+reg [15:0] p2;    // PORT_START ("P2")
+reg [15:0] dsw1;  // PORT_START ("DSW0")
+reg [15:0] dsw2;  // PORT_START ("DSW1")
+reg [15:0] coin;  // PORT_START ("COIN")
+reg p1_invert;    // { return m_io_p1->read() ^ m_invert_controls; }
 
 always @ (posedge clk_sys ) begin 
     p1 <= 16'hffff;
-    p1[7:0] <= ~{ start1, p1_buttons[2:0], p1_right, p1_left ,p1_down, p1_up};
-     
+    p1[7:0] <= { 8 {p1_invert} } ^ ~{ start1, p1_buttons[2:0], p1_right, p1_left , p1_down, p1_up};
+    
     p2 <= 16'hffff;
     p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left ,p2_down, p2_up};
     
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 14'hffff, coin_b, coin_a };
+    coin <=  { 14'h3fff, ~coin_b, ~coin_a };
+    //coin <=  { 10'h3ff, 1'b0, ~key_tilt, key_test, ~key_service, ~coin_b, ~coin_a };
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
 wire        p1_left    = joy0[1] | key_p1_left;
 wire        p1_down    = joy0[2] | key_p1_down;
 wire        p1_up      = joy0[3] | key_p1_up;
-wire [3:0]  p1_buttons = joy0[7:4] | {key_p1_d, key_p1_c, key_p1_b, key_p1_a};
+wire [2:0]  p1_buttons = joy0[6:4] | {key_p1_c, key_p1_b, key_p1_a};
 
 wire        p2_right   = joy1[0] | key_p2_right;
 wire        p2_left    = joy1[1] | key_p2_left;
 wire        p2_down    = joy1[2] | key_p2_down;
-wire        p2_up      = joy1[3] | key_p2_up | status[36];
-wire [3:0]  p2_buttons = joy1[7:4] | {key_p2_d, key_p2_c, key_p2_b | status[36], key_p2_a | status[36]};
+wire        p2_up      = joy1[3] | key_p2_up;
+wire [2:0]  p2_buttons = joy1[6:4] | {key_p2_c, key_p2_b, key_p2_a};
 
-wire        start1  = joy0[8]  | joy1[8]  | key_start_1p;
-wire        start2  = joy0[9]  | joy1[9]  | key_start_2p | status[11];
-wire        coin_a  = joy0[10] | joy1[10] | key_coin_a;
-wire        coin_b  = joy0[11] | joy1[11] | key_coin_b;
-wire        b_pause = joy0[12] | key_pause ;
+wire        start1  = joy0[7]  | joy1[7]  | key_start_1p;
+wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
+wire        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
+wire        coin_b  = joy0[10] | joy1[10] | key_coin_b;
+wire        b_pause = joy0[11] | key_pause;
+wire        service = joy0[12] | key_test;
 
 // Keyboard handler
 
 wire key_start_1p, key_start_2p, key_coin_a, key_coin_b;
-wire key_test, key_reset, key_service, key_pause;
+wire key_tilt, key_test, key_reset, key_service, key_pause;
 wire key_txt_enable, key_fg_enable, key_bg_enable, key_spr_enable;
 
 wire key_p1_up, key_p1_left, key_p1_down, key_p1_right, key_p1_a, key_p1_b, key_p1_c, key_p1_d;
@@ -394,9 +392,10 @@ always @(posedge clk_sys) begin
             'h01e: key_start_2p   <= pressed; // 2
             'h02E: key_coin_a     <= pressed; // 5
             'h036: key_coin_b     <= pressed; // 6
-            'h006: key_test       <= key_test ^ pressed; // f2
+            'h006: key_test       <= pressed; // f2
             'h004: key_reset      <= pressed; // f3
             'h046: key_service    <= pressed; // 9
+            'h02c: key_tilt       <= pressed; // t
             'h04D: key_pause      <= pressed; // p
 
             'hX75: key_p1_up      <= pressed; // up
@@ -438,7 +437,7 @@ pll pll
 (
     .refclk(CLK_50M),
     .rst(0),
-    .outclk_0(clk_sys),    
+    .outclk_0(clk_sys),
     .outclk_1(clk_72M),
     .locked(pll_locked)
 );
@@ -500,7 +499,7 @@ always @ (posedge clk_sys) begin
 end
 
 wire    reset;
-assign  reset = RESET | ioctl_download | key_reset | status[0] ; 
+assign  reset = RESET | key_reset | status[0] ; 
 
 //////////////////////////////////////////////////////////////////
 wire rotate_ccw = 1;
@@ -958,7 +957,6 @@ reg pen_valid;
 
 always @ (posedge clk_sys) begin
     if ( reset == 1 ) begin
-	
     end else begin
         if ( hc < 257 ) begin
             if ( clk6_count == 1 ) begin
@@ -970,7 +968,7 @@ always @ (posedge clk_sys) begin
                 sp <= spr_buf_dout[7:0] ;
                 rgb <= 0;
                 pen_valid <= 0;
-            end else if ( clk6_count == 3 ) begin   
+            end else if ( clk6_count == 3 ) begin
                 // priority
                 if ( gfx_bg_en == 1 ) begin
                     pen <= 12'd768 + bg[7:0];
@@ -993,7 +991,7 @@ always @ (posedge clk_sys) begin
             end else if ( clk6_count == 5 ) begin                
                 tile_pal_addr <= pen ;
             end else if ( clk6_count == 7 ) begin                
-                if ( hc < 256 && pen_valid == 1 ) begin
+                if ( hc < 257 && pen_valid == 1 ) begin
                     rgb <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
                 end
             end
@@ -1001,6 +999,7 @@ always @ (posedge clk_sys) begin
         end
     end
 end
+
 
 /// 68k cpu
 
@@ -1097,6 +1096,7 @@ wire    bg_scroll_x_cs;
 wire    bg_scroll_y_cs;
 wire    fg_scroll_x_cs;
 wire    fg_scroll_y_cs;
+wire    m_invert_ctrl_cs;
 wire    sound_latch_cs;
 
 wire    z80_rom_cs;
@@ -1138,6 +1138,8 @@ chip_select cs (
     .fg_scroll_x_cs,
     .bg_scroll_y_cs,
     .bg_scroll_x_cs,
+
+    .m_invert_ctrl_cs,
 
     .sound_latch_cs,
     
@@ -2012,12 +2014,12 @@ sdram #(.CLK_FREQ( (CLKSYS+0.0))) sdram
   .sdram_dqml(SDRAM_DQML),
   .sdram_dqmh(SDRAM_DQMH)
 );    
-    
+
 endmodule
 
 module delay
 (
-    input clk,  
+    input clk,
     input i,
     output o
 );
@@ -2031,4 +2033,3 @@ always @(posedge clk) begin
 end
 
 endmodule
-
