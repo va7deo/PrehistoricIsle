@@ -209,8 +209,11 @@ assign m68k_a[0] = 0;
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
 wire [2:0]  scan_lines = status[6:4];
+
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
+wire [3:0]  hs_width  = status[59:56];
+wire [3:0]  vs_width  = status[63:60];
 
 wire gfx_tx_en = ~(status[37] | key_txt_enable);
 wire gfx_fg_en = ~(status[38] | key_fg_enable );
@@ -235,8 +238,10 @@ localparam CONF_STR = {
     "P1O7,Video Mode,NTSC,PAL;",
     "P1OM,Video Signal,RGBS/YPbPr,Y/C;",
     "P1-;",
-    "P1OOR,H-sync Adjust,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
-    "P1OSV,V-sync Adjust,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+    "P1OOR,H-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+    "P1OSV,V-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+    "P1oor,H-sync Width Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+    "P1osv,V-sync Width Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "P1-;",
     "P2,Pause Options;",
     "P2-;",
@@ -532,6 +537,8 @@ video_timing video_timing (
     .vc(vc),
     .hs_offset(hs_offset),
     .vs_offset(vs_offset),
+    .hs_width(hs_width),
+    .vs_width(vs_width),
     .hbl(hbl),
     .vbl(vbl),
     .hsync(hsync),

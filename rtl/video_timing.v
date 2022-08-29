@@ -7,8 +7,11 @@ module video_timing
 
     input  [2:0] pcb,
     
-    input  signed [8:0] hs_offset,
-    input  signed [8:0] vs_offset,
+    input  signed [3:0] hs_offset,
+    input  signed [3:0] vs_offset,
+    
+    input  signed [3:0] hs_width,
+    input  signed [3:0] vs_width,
 
     output [8:0] hc,
     output [8:0] vc,
@@ -25,14 +28,14 @@ wire [8:0] h_ofs = 0;
 wire [8:0] HBL_START  = 256 ;
 wire [8:0] HBL_END    = 0 ;
 wire [8:0] HS_START   = HBL_START + 8 ;
-wire [8:0] HS_END     = HBL_START + 40 ;
+wire [8:0] HS_END     = HBL_START + 32 + hs_width ;
 wire [8:0] HTOTAL     = 383;
 
 wire [8:0] v_ofs = 0;
 wire [8:0] VBL_START  = 241 ;
 wire [8:0] VBL_END    = 17 ;
-wire [8:0] VS_START   = VBL_START + 4 ;
-wire [8:0] VS_END     = VBL_START + 8 ;
+wire [8:0] VS_START   = VBL_START + 3 ;
+wire [8:0] VS_END     = VBL_START + 13 + vs_width ;
 wire [8:0] VTOTAL     = 288 ;
 
 reg [8:0] v;
