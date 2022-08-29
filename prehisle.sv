@@ -204,7 +204,7 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X  XXXXXXX          XXX XXXXXXXX    X XXXX                       
+// X   XXXXXX          XXX XXXXXXXX      XXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
@@ -227,7 +227,7 @@ localparam CONF_STR = {
     "P1,Video Settings;",
     "P1-;",
     "P1O89,Aspect Ratio,Original,Full Screen,[ARC1],[ARC2];",
-    "P1O3,Orientation,Horz,Vert;",
+    //"P1O3,Orientation,Horz,Vert;",
     "P1-;",
     "P1O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%,CRT 100%;",
     "P1OA,Force Scandoubler,Off,On;",
@@ -243,9 +243,7 @@ localparam CONF_STR = {
     "P2OK,Pause when OSD is open,Off,On;",
     "P2OL,Dim video after 10s,Off,On;",
     "-;",
-    "P3,PCB & Debug Settings;",
-    "P3-;",
-    "P3o3,Service Menu,Off,On;",
+    "P3,Debug Settings;",
     "P3-;",
     "P3o5,Text Layer,On,Off;",
     "P3o6,Foreground Layer,On,Off;",
@@ -365,7 +363,7 @@ wire        start2  = joy0[8]  | joy1[8]  | key_start_2p;
 wire        coin_a  = joy0[9]  | joy1[9]  | key_coin_a;
 wire        coin_b  = joy0[10] | joy1[10] | key_coin_b;
 wire        b_pause = joy0[11] | key_pause;
-wire        service = joy0[12] | key_test | status[35];
+wire        service = joy0[12] | key_test;
 
 // Keyboard handler
 
@@ -388,7 +386,7 @@ always @(posedge clk_sys) begin
             'h01e: key_start_2p   <= pressed; // 2
             'h02E: key_coin_a     <= pressed; // 5
             'h036: key_coin_b     <= pressed; // 6
-            'h006: key_test       <= key_test ^ pressed; // f2
+            'h006: key_test       <= pressed; // f2
             'h004: key_reset      <= pressed; // f3
             'h046: key_service    <= pressed; // 9
             'h02c: key_tilt       <= pressed; // t
@@ -495,7 +493,7 @@ always @ (posedge clk_sys) begin
 end
 
 wire    reset;
-assign  reset = RESET | ioctl_download | key_reset | status[0] ; 
+assign  reset = RESET | key_reset | status[0] ; 
 
 //////////////////////////////////////////////////////////////////
 wire rotate_ccw = 1;
@@ -985,7 +983,7 @@ always @ (posedge clk_sys) begin
             end else if ( clk6_count == 5 ) begin                
                 tile_pal_addr <= pen ;
             end else if ( clk6_count == 7 ) begin                
-                if ( hc < 256 && pen_valid == 1 ) begin
+                if ( hc < 257 && pen_valid == 1 ) begin
                     rgb <= { tile_pal_dout[15:12],4'h0,tile_pal_dout[11:8],4'h0,tile_pal_dout[7:4],4'h0 };
                 end
             end

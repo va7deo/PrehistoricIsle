@@ -25,14 +25,14 @@ wire [8:0] h_ofs = 0;
 wire [8:0] HBL_START  = 256 ;
 wire [8:0] HBL_END    = 0 ;
 wire [8:0] HS_START   = HBL_START + 8 + $signed(hs_offset);
-wire [8:0] HS_END     = HBL_START + 40 + $signed(hs_offset);
+wire [8:0] HS_END     = HBL_START + 32 + $signed(hs_offset);
 wire [8:0] HTOTAL     = 383;
 
 wire [8:0] v_ofs = 0;
 wire [8:0] VBL_START  = 241 ;
 wire [8:0] VBL_END    = 17 ;
-wire [8:0] VS_START   = VBL_START + 4 + $signed(vs_offset);
-wire [8:0] VS_END     = VBL_START + 8 + $signed(vs_offset);
+wire [8:0] VS_START   = VBL_START + 3 + $signed(vs_offset);
+wire [8:0] VS_END     = VBL_START + 13 + $signed(vs_offset);
 wire [8:0] VTOTAL     = 288 ;
 
 reg [8:0] v;
