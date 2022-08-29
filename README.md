@@ -29,11 +29,11 @@ Currently in an **alpha state**, this core is in active development with assista
 - Final stage shows the SNK logo from attract and inputs for joystick only function diagonally; clear after completing the stage  
 - Measure HBLANK, VBLANK, HSYNC, and VSYNC timings from PCB for analog output  
 - Transparency and layer priorities visible in attract mode (plane does not interleave with trees)  
-- Sprite layer needs to shift left one  
+- Sprite layer needs to shift right one  
 - ~~One row of pixels/line missing from the right side of HVISIBLE~~  
 - ~~Update inputs for 2L3B; correct mapping~~  
 - ~~Correct H/V offset options to shift left, right, up, and down~~  
-- Audio issues known, may be an issue with the jtopl2 core or the current usage<br>(No need to report further audio issues)  
+- Audio issues known, may be an issue with the jtopl2 core or the current usage<br>(No need to report further audio issues; it appears there are no audio issues in this particular game for OPL2)  
 
 # PCB Check List
 
