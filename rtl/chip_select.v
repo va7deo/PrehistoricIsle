@@ -29,6 +29,7 @@ module chip_select
     output reg bg_scroll_y_cs,
     output reg fg_scroll_x_cs,
     output reg fg_scroll_y_cs,
+    output reg m_invert_ctrl_cs,
     output reg sound_latch_cs,
 
     // Z80 selects
@@ -67,44 +68,56 @@ end
 endfunction
 
 always @ (*) begin
-
 //	map(0x000000, 0x03ffff).rom();
     m68k_rom_cs      <= m68k_cs( 24'h000000, 24'h03ffff ) ;
+
 //	map(0x070000, 0x073fff).ram();
     m68k_ram_cs      <= m68k_cs( 24'h070000, 24'h073fff ) ; 
+
 //	map(0x090000, 0x0907ff).ram().w(FUNC(prehisle_state::tx_vram_w)).share("tx_vram");
     m68k_txt_ram_cs  <= m68k_cs( 24'h090000, 24'h0907ff ) ;
+
 //	map(0x0a0000, 0x0a07ff).ram().share("spriteram");
     m68k_spr_cs      <= m68k_cs( 24'h0a0000, 24'h0a07ff ) ;
+
 //	map(0x0b0000, 0x0b3fff).ram().w(FUNC(prehisle_state::fg_vram_w)).share("fg_vram");
     m68k_fg_ram_cs   <= m68k_cs( 24'h0b0000, 24'h0b3fff ) ; 
+
 //	map(0x0d0000, 0x0d07ff).ram().w(m_palette, FUNC(palette_device::write16)).share("palette");
     m68k_pal_cs      <= m68k_cs( 24'h0d0000, 24'h0d07ff ) ;
+
 //	map(0x0e0010, 0x0e0011).portr("P2");                     // Player 2
-    input_p2_cs      <= m68k_cs( 24'h0e0010, 24'h0e0011 ) ; 
+    input_p2_cs      <= m68k_cs( 24'h0e0010, 24'h0e0011 ) ;
 
 //	map(0x0e0020, 0x0e0021).portr("COIN");                   // Coins, Tilt, Service
-    input_coin_cs    <= m68k_cs( 24'h0e0020, 24'h0e0021 ) ; 
-    
+    input_coin_cs    <= m68k_cs( 24'h0e0020, 24'h0e0021 ) ;
+
 //	map(0x0e0041, 0x0e0041).lr8(NAME([this] () -> u8 { return m_io_p1->read() ^ m_invert_controls; })); // Player 1
-    input_p1_cs      <= m68k_cs( 24'h0e0040, 24'h0e0041 ) ; 
+    input_p1_cs      <= m68k_cs( 24'h0e0040, 24'h0e0041 ) ;
+
 //	map(0x0e0042, 0x0e0043).portr("DSW0");                   // DIPs
-    input_dsw1_cs    <= m68k_cs( 24'h0e0042, 24'h0e0043 ) ; 
+    input_dsw1_cs    <= m68k_cs( 24'h0e0042, 24'h0e0043 ) ;
+
 //	map(0x0e0044, 0x0e0045).portr("DSW1");                   // DIPs + VBLANK
-    input_dsw2_cs    <= m68k_cs( 24'h0e0044, 24'h0e0045 ) ; 
+    input_dsw2_cs    <= m68k_cs( 24'h0e0044, 24'h0e0045 ) ;
 
 //	map(0x0f0000, 0x0f0001).w(FUNC(prehisle_state::fg_scrolly_w));
-    fg_scroll_y_cs   <= m68k_cs( 24'h0f0000, 24'h0f0001 ) ; 
+    fg_scroll_y_cs   <= m68k_cs( 24'h0f0000, 24'h0f0001 ) ;
+
 //	map(0x0f0010, 0x0f0011).w(FUNC(prehisle_state::fg_scrollx_w));
-    fg_scroll_x_cs   <= m68k_cs( 24'h0f0010, 24'h0f0011 ) ; 
+    fg_scroll_x_cs   <= m68k_cs( 24'h0f0010, 24'h0f0011 ) ;
 
 //	map(0x0f0020, 0x0f0021).w(FUNC(prehisle_state::bg_scrolly_w));
-    bg_scroll_y_cs   <= m68k_cs( 24'h0f0020, 24'h0f0021 ) ; 
+    bg_scroll_y_cs   <= m68k_cs( 24'h0f0020, 24'h0f0021 ) ;
+
 //	map(0x0f0030, 0x0f0031).w(FUNC(prehisle_state::bg_scrollx_w));
-    bg_scroll_x_cs   <= m68k_cs( 24'h0f0030, 24'h0f0031 ) ; 
+    bg_scroll_x_cs   <= m68k_cs( 24'h0f0030, 24'h0f0031 ) ;
+
+//	map(0x0f0046, 0x0f0047).lw16(NAME([this] (u16 data) { m_invert_controls = data ? 0xff : 0x00; }));  // P1 Invert Controls
+    m_invert_ctrl_cs   <= m68k_cs( 24'h0f0046, 24'h0f0047 ) ;
 
 //	map(0x0f0070, 0x0f0071).w(FUNC(prehisle_state::soundcmd_w));
-    sound_latch_cs   <= m68k_cs( 24'h0f0070, 24'h0f0071 ) ; 
+    sound_latch_cs   <= m68k_cs( 24'h0f0070, 24'h0f0071 ) ;
 
     z80_rom_cs       <= ( MREQ_n == 0 && z80_addr[15:0] < 16'hf000 );
     z80_ram_cs       <= ( MREQ_n == 0 && z80_addr[15:0] >= 16'hf000 && z80_addr[15:0] < 16'hf800 );
