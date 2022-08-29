@@ -343,7 +343,8 @@ always @ (posedge clk_sys ) begin
     
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 10'h3ff, 1'b0, ~key_tilt, key_test, ~key_service, ~coin_b, ~coin_a };
+    coin <=  { 14'h3fff, ~coin_b, ~coin_a };
+    //coin <=  { 10'h3ff, 1'b0, ~key_tilt, key_test, ~key_service, ~coin_b, ~coin_a };
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
@@ -1088,6 +1089,7 @@ wire    bg_scroll_x_cs;
 wire    bg_scroll_y_cs;
 wire    fg_scroll_x_cs;
 wire    fg_scroll_y_cs;
+wire    m_invert_ctrl_cs;
 wire    sound_latch_cs;
 
 wire    z80_rom_cs;
@@ -1129,6 +1131,8 @@ chip_select cs (
     .fg_scroll_x_cs,
     .bg_scroll_y_cs,
     .bg_scroll_x_cs,
+
+    .m_invert_ctrl_cs,
 
     .sound_latch_cs,
     
