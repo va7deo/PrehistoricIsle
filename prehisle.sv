@@ -240,8 +240,8 @@ localparam CONF_STR = {
     "P1-;",
     "P1OOR,H-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "P1OSV,V-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
-    "P1oor,H-sync Width Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
-    "P1osv,V-sync Width Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+    "P1oOR,H-sync Width Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
+    "P1oSV,V-sync Width Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "P1-;",
     "P2,Pause Options;",
     "P2-;",
@@ -348,8 +348,7 @@ always @ (posedge clk_sys ) begin
     
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
-    coin <=  { 14'h3fff, ~coin_b, ~coin_a };
-    //coin <=  { 10'h3ff, 1'b0, ~key_tilt, key_test, ~key_service, ~coin_b, ~coin_a };
+    coin <=  { 11'h7ff, ~key_tilt, ~key_test, ~key_service, ~coin_b, ~coin_a };
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
@@ -810,7 +809,7 @@ always @ (posedge clk_sys) begin
         end else if ( sprite_state == 21 )  begin  
             spr_buf_w <= 1 ;
             spr_buf_addr_w <= { vc[0], spr_x_pos };
-            if ( spr_x_pos == 255 ) begin
+            if ( spr_x_pos == 256 ) begin
                 spr_buf_w <= 0 ;
                 sprite_state <= 22;
             end
@@ -974,12 +973,15 @@ always @ (posedge clk_sys) begin
                     pen <= 12'd768 + bg[7:0];
                     pen_valid <= 1;
                 end
-                
+                if ( sp[3:0] < 15 && gfx_sp_en == 1 && sp[7:4] >= 4) begin
+                    pen <= 12'd256 + sp[7:0];
+                    pen_valid <= 1;
+                end
                 if ( fg[3:0] < 15 && gfx_fg_en == 1 ) begin
                     pen <= 12'd512 + fg[7:0];
                     pen_valid <= 1;
                 end
-                if ( sp[3:0] < 15 && gfx_sp_en == 1 ) begin
+                if ( sp[3:0] < 15 && gfx_sp_en == 1 && sp[7:4] < 4) begin
                     pen <= 12'd256 + sp[7:0];
                     pen_valid <= 1;
                 end
@@ -1024,6 +1026,7 @@ always @ (posedge clk_sys) begin
                          m68k_spr_cs  ? m68k_sprite_dout :
                          m68k_fg_ram_cs ? m68k_fg_ram_dout :
                          m68k_pal_cs ? m68k_pal_dout :
+                         m_invert_ctrl_cs ? 0 :
                          input_p1_cs ? p1 :
                          input_p2_cs ? p2 :
                          input_dsw1_cs ? dsw1 :
@@ -1054,7 +1057,14 @@ always @ (posedge clk_sys) begin
                 if ( bg_scroll_y_cs == 1 ) begin
                     bg_scroll_y <= m68k_dout;
                 end                     
+
+                if ( m_invert_ctrl_cs == 1 ) begin
+                    p1_invert <= m68k_dout[0];
+                end                     
+                
             end 
+            
+            
         end
         
         if ( clk_4M == 1 && z80_nmi_n == 0 && z80_addr == 16'h0066 ) begin
