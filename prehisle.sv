@@ -599,7 +599,7 @@ arcade_video #(256,24) arcade_video
 
 // SET PAL and NTSC TIMING
 `ifdef MISTER_ENABLE_YC
-    assign CHROMA_PHASE_INC = PALFLAG ? 40'd67705769163 : 40'd54663218274;
+    assign CHROMA_PHASE_INC = PALFLAG ? 40'd67706006731 : 40'd54662994786;
     assign YC_EN =  status[22];
     assign PALFLAG = status[7];
 `endif
