@@ -457,7 +457,7 @@ always @ (posedge clk_sys) begin
 
     clk_4M <= ( clk4_count == 0 );
 
-    if ( clk4_count == 15 ) begin
+    if ( clk4_count == 17 ) begin
         clk4_count <= 0;
     end else begin
         clk4_count <= clk4_count + 1;
@@ -1465,10 +1465,8 @@ jt7759 upd
 
 always @ * begin
     // mix audio
-    AUDIO_L <= sample ;
-    AUDIO_R <= upd_sample ;
-//    AUDIO_L <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
-//    AUDIO_R <= sample + ($signed({ ~dac1[7], dac1[6:0], 8'b0 }) >>> 1) + ($signed({ ~dac2[7], dac2[6:0], 8'b0 }) >>> 1) ;
+    AUDIO_L <= ( sample + upd_sample ) >>> 1;
+    AUDIO_R <= ( sample + upd_sample ) >>> 1;
 end
 
 reg [7:0] dac1;

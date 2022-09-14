@@ -47,8 +47,8 @@ H-Sync      | V-Sync      | Source | Refresh Rate      |
 ------------|-------------|--------|-------------------|
 15.625kHz   | 54.065743Hz | OSSC   | 15.61kHz / 54.1Hz |
 
-Until PCB measurements are taken timing information is available below:
-[**OSSC**](https://user-images.githubusercontent.com/32810066/187164273-01cf0a2e-6eb4-47ce-ba79-830a7e977212.jpg)
+Until PCB measurements are taken timing information is available below:<br><br>
+[**OSSC**](https://user-images.githubusercontent.com/32810066/187164273-01cf0a2e-6eb4-47ce-ba79-830a7e977212.jpg)<br><br>
 [**OSSC**](https://mametesters.org/view.php?id=5939)
 
 ### Crystal Oscillators
