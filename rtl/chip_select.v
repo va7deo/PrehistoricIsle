@@ -29,6 +29,7 @@ module chip_select
     output reg bg_scroll_y_cs,
     output reg fg_scroll_x_cs,
     output reg fg_scroll_y_cs,
+    output reg flip_cs,
     output reg m_invert_ctrl_cs,
     output reg sound_latch_cs,
 
@@ -116,8 +117,11 @@ always @ (*) begin
 //	map(0x0f0046, 0x0f0047).lw16(NAME([this] (u16 data) { m_invert_controls = data ? 0xff : 0x00; }));  // P1 Invert Controls
     m_invert_ctrl_cs   <= m68k_cs( 24'h0f0046, 24'h0f0047 ) ;
 
+    flip_cs          <= m68k_cs( 24'h0f0060, 24'h0f0061 ) ;
+
 //	map(0x0f0070, 0x0f0071).w(FUNC(prehisle_state::soundcmd_w));
     sound_latch_cs   <= m68k_cs( 24'h0f0070, 24'h0f0071 ) ;
+    
 
     z80_rom_cs       <= ( MREQ_n == 0 && z80_addr[15:0] < 16'hf000 );
     z80_ram_cs       <= ( MREQ_n == 0 && z80_addr[15:0] >= 16'hf000 && z80_addr[15:0] < 16'hf800 );

@@ -616,11 +616,6 @@ reg [3:0] bg_pix ;
 
 reg [7:0] hc_del;
 
-wire [11:0] pal  [0:15] = '{12'h000,12'hbbb,12'hc00,12'h0c0,12'h00c,12'hc30,12'hcc0,12'h08c,12'hc60,12'hc80,12'hcc0,12'hc30,12'h0c6,12'h07c,12'hc57,12'h666};
-wire [11:0] pal2 [0:15] = '{12'ha00,12'hc11,12'he42,12'hf74,12'h121,12'h242,12'h362,12'h583,12'h694,12'h9b5,12'h100,12'hcd7,12'hee9,12'h400,12'hfff,12'h000};
-wire [11:0] pal3 [0:15] = '{12'h541,12'h975,12'h482,12'h251,12'h121,12'h6ed,12'h0cb,12'h0a9,12'h087,12'h065,12'h9cf,12'h6ae,12'h38d,12'h06c,12'h04b,12'h000};
-// 0xffaa0000,0xffcc1111,0xffee4422,0xffff7744,0xff112211,0xff224422,0xff336622,0xff558833,0xff669944,0xff99bb55,0xff110000,0xffccdd77,0xffeeee99,0xff440000,0xffffffff,0xff000000
-
 reg [4:0] tile_state;
 reg [4:0] sprite_state;
 reg [8:0] sprite_num;
@@ -632,15 +627,17 @@ reg  [31:0] spr_pix_data;
 
 reg  [8:0] x;
 wire [8:0] tx_x = x ;
-wire [8:0] tx_y = vc ;
+wire [8:0] tx_y = ( flip_screen == 0 ) ? vc : ~vc ;
+wire [8:0] sp_y = ( flip_screen == 0 ) ? vc : 255 - vc ;
 
 wire [13:0] fg_x = x  + fg_scroll_x ;
-wire  [8:0] fg_y = vc + fg_scroll_y ;
+wire  [8:0] fg_y = ( flip_screen == 0 ) ? ( vc + fg_scroll_y ) : ( 255 - vc ) + fg_scroll_y ;
 
 wire [13:0] bg_x = x  + bg_scroll_x ;
-wire  [8:0] bg_y = vc + bg_scroll_y ;
+wire  [8:0] bg_y = ( flip_screen == 0 ) ? ( vc + bg_scroll_y ) : ( 255 - vc ) + bg_scroll_y  ;
 
 wire  [9:0] txt_tile = { vc[7:3], hc[7:3] };
+
 wire [14:0] fg_tile  = { fg_x[11:4], fg_y[8:4] } ; 
 wire [14:0] bg_tile  = { bg_x[13:4], bg_y[8:4] } ; 
 
@@ -664,7 +661,7 @@ always @ (posedge clk_sys) begin
             // address is valid - need more more cycle to read 
             tile_state <= 3;
         end else if ( tile_state == 3) begin  
-            txt_rom_addr <= { txt_ram_dout[11:0], vc[2:0] } ;
+            txt_rom_addr <= { txt_ram_dout[11:0], tx_y[2:0] } ;
             txt_rom_cs <= 1;
             tile_state <= 4;
         end else if ( tile_state == 4) begin             
@@ -825,8 +822,8 @@ always @ (posedge clk_sys) begin
             sprite_state <= 3;
         end else if ( sprite_state == 3 )  begin
             // y valid
-            if ( vc >= sprite_y && vc < ( sprite_y + 16 ) ) begin
-                spr_y_ofs <= vc - sprite_y ;
+            if ( sp_y >= sprite_y && sp_y < ( sprite_y + 16 ) ) begin
+                spr_y_ofs <= sp_y - sprite_y ;
                 // setup to read x
                 sprite_ram_addr <= sprite_ram_addr + 1 ;
                 sprite_state <= 4;
@@ -913,7 +910,7 @@ always @ (posedge clk_sys) begin
     end
 end
 
-wire [8:0] sprite_y =  sprite_ram_dout[8:0]  ; // { 8 {sprite_ram_dout[8]} } ^
+wire [8:0] sprite_y = sprite_ram_dout[8:0] ; // { 8 {sprite_ram_dout[8]} } ^
 reg  [3:0] spr_y_ofs ;
 
 reg  [8:0]  spr_x_ofs;
@@ -922,24 +919,6 @@ reg [12:0]  spr_tile_num;
 reg         spr_flip_x;
 reg         spr_flip_y;
 
-//int16_t sy = spriteram16[offs] & 0x1ff;
-//int16_t sx = spriteram16[offs + 1] & 0x1ff;
-//uint16_t const attr = spriteram16[offs + 2];
-//uint16_t const color = spriteram16[offs + 3] >> 12;
-//uint16_t const code = attr & 0x1fff;
-//uint32_t const priority = GFX_PMASK_4 | ((color < 0x4) ? 0 : GFX_PMASK_2); // correct?
-//bool flipx = attr & 0x4000;
-//bool flipy = attr & 0x8000;
-        
-// sprite addr 0 - 3ff
-// sprite num 0 - ff
-//reg  [10:0] sprite_ram_addr;
-//wire [15:0] sprite_ram_dout;
-
-//reg   [9:0]  spr_buf_addr_w;
-//reg          spr_buf_w;
-//reg   [7:0]  spr_buf_din;
-//wire  [7:0]  spr_buf_dout;
 
 reg [7:0] tx;
 reg [7:0] fg;
@@ -959,7 +938,7 @@ always @ (posedge clk_sys) begin
     end else begin
         if ( hc < 257 ) begin
             if ( clk6_count == 1 ) begin
-                line_buf_addr_r <= { ~vc[0], hc[8:0] };
+                line_buf_addr_r <= { ~vc[0], ( flip_screen == 0 ) ? hc[8:0] : { hc[8], ~hc[7:0]} };
             end else if ( clk6_count == 2 ) begin
                 tx <= line_buf_tx_out[7:0] ;
                 fg <= line_buf_fg_out[7:0] ;
@@ -1005,13 +984,15 @@ end
 
 /// 68k cpu
 
+reg flip_screen ;
+
 always @ (posedge clk_sys) begin
 
     if ( reset == 1 ) begin
         m68k_dtack_n <= 1;
         z80_nmi_n <= 1 ;
         z80_irq_n <= 1 ;
-        
+        flip_screen <= 0;
     end else begin
         if ( clk_18M == 1 ) begin
             // tell 68k to wait for valid data. 0=ready 1=wait
@@ -1062,6 +1043,9 @@ always @ (posedge clk_sys) begin
                     p1_invert <= m68k_dout[0];
                 end                     
                 
+                if ( flip_cs == 1 ) begin
+                    flip_screen <= m68k_dout[0];
+                end
             end 
             
             
@@ -1108,6 +1092,7 @@ wire    fg_scroll_x_cs;
 wire    fg_scroll_y_cs;
 wire    m_invert_ctrl_cs;
 wire    sound_latch_cs;
+wire    flip_cs;
 
 wire    z80_rom_cs;
 wire    z80_ram_cs;
@@ -1148,6 +1133,7 @@ chip_select cs (
     .fg_scroll_x_cs,
     .bg_scroll_y_cs,
     .bg_scroll_x_cs,
+    .flip_cs,
 
     .m_invert_ctrl_cs,
 
