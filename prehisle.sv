@@ -204,11 +204,12 @@ assign m68k_a[0] = 0;
 // 0         1         2         3          4         5         6   
 // 01234567890123456789012345678901 23456789012345678901234567890123
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
-// X   XXXXXX          XXX XXXXXXXX      XXXX                       
+// X  XXXXXXX         XXXX XXXXXXXX      XXXX                       
 
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
 wire [2:0]  scan_lines = status[6:4];
+wire        refresh_mod = status[19];
 
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
@@ -230,13 +231,14 @@ localparam CONF_STR = {
     "P1,Video Settings;",
     "P1-;",
     "P1O89,Aspect Ratio,Original,Full Screen,[ARC1],[ARC2];",
-    //"P1O3,Orientation,Horz,Vert;",
+    "P1O3,Orientation,Horz,Vert;",
     "P1-;",
     "P1O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%,CRT 100%;",
     "P1OA,Force Scandoubler,Off,On;",
     "P1-;",
     "P1O7,Video Mode,NTSC,PAL;",
     "P1OM,Video Signal,RGBS/YPbPr,Y/C;",
+    "P1OJ,Video Refresh Rate,54.1Hz,59.2Hz;",
     "P1-;",
     "P1OOR,H-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "P1OSV,V-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
@@ -532,6 +534,7 @@ video_timing video_timing (
     .clk(clk_6M),
     .clk_pix(1'b1),
     .pcb(pcb),
+    .refresh_mod(refresh_mod),
     .hc(hc),
     .vc(vc),
     .hs_offset(hs_offset),
