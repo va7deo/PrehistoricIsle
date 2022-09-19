@@ -206,9 +206,11 @@ assign m68k_a[0] = 0;
 // 0123456789ABCDEFGHIJKLMNOPQRSTUV 0123456789ABCDEFGHIJKLMNOPQRSTUV
 // X   XXXXXX          XXX XXXXXXXX      XXXX                       
 
-wire [1:0]  aspect_ratio = status[9:8];
-wire        orientation = ~status[3];
-wire [2:0]  scan_lines = status[6:4];
+wire [1:0]  aspect_ratio =  status[9:8];
+wire        orientation  = ~status[3];
+wire [2:0]  scan_lines   =  status[6:4];
+
+reg         refresh_mod  ; 
 
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
@@ -230,13 +232,14 @@ localparam CONF_STR = {
     "P1,Video Settings;",
     "P1-;",
     "P1O89,Aspect Ratio,Original,Full Screen,[ARC1],[ARC2];",
-    //"P1O3,Orientation,Horz,Vert;",
+    "P1O3,Orientation,Horz,Vert;",
     "P1-;",
     "P1O46,Scandoubler Fx,None,HQ2x,CRT 25%,CRT 50%,CRT 75%,CRT 100%;",
     "P1OA,Force Scandoubler,Off,On;",
     "P1-;",
     "P1O7,Video Mode,NTSC,PAL;",
     "P1OM,Video Signal,RGBS/YPbPr,Y/C;",
+    // "P1OJ,Refresh Rate,Original,Compatibility;",
     "P1-;",
     "P1OOR,H-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "P1OSV,V-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
@@ -350,6 +353,8 @@ always @ (posedge clk_sys ) begin
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
     coin <=  { 11'h7ff, ~key_tilt, ~key_test, ~key_service, ~coin_b, ~coin_a };
+    
+    refresh_mod <= ~sw[2][0] ;
 end
 
 wire        p1_right   = joy0[0] | key_p1_right;
@@ -446,18 +451,19 @@ assign    SDRAM_CLK = clk_72M;
 
 localparam  CLKSYS=72;
 
-reg [5:0] clk18_count;
-reg [5:0] clk9_count;
-reg [5:0] clk6_count;
-reg [5:0] clk4_count;
-reg [15:0] clk_upd_count;
+reg  [5:0]  clk18_count;
+reg  [5:0]  clk9_count;
+reg  [5:0]  clk6_count;
+reg  [5:0]  clk4_count;
+reg [15:0]  clk_upd_count;
+reg         clk_upd_even;
 
 
 always @ (posedge clk_sys) begin
 
     clk_4M <= ( clk4_count == 0 );
 
-    if ( clk4_count == 15 ) begin
+    if ( clk4_count == 17 ) begin
         clk4_count <= 0;
     end else begin
         clk4_count <= clk4_count + 1;
@@ -490,8 +496,9 @@ always @ (posedge clk_sys) begin
     clk_upd <= ( clk_upd_count == 0 );
 
     // 72MHz / 113 == 637.168KHz.  should be 640.
-    // todo : use fractional divider 112.5  alternate between 112 & 113
-    if ( clk_upd_count == 112 ) begin    
+    // fractional divider 112.5  alternate between 112 & 113
+    if ( clk_upd_count == (8'h111 + clk_upd_even ) ) begin    
+        clk_upd_even <= ~clk_upd_even ;
         clk_upd_count <= 0;
     end else if ( pause_cpu == 0 ) begin
         clk_upd_count <= clk_upd_count + 1;
@@ -532,6 +539,7 @@ video_timing video_timing (
     .clk(clk_6M),
     .clk_pix(1'b1),
     .pcb(pcb),
+    .refresh_mod(refresh_mod),
     .hc(hc),
     .vc(vc),
     .hs_offset(hs_offset),
