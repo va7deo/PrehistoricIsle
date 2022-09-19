@@ -5,7 +5,7 @@ FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardw
 
 The intent is for this core to be a 1:1 playable implementation of Prehistoric Isle in 1930 arcade hardware.
 
-Currently in an **alpha state**, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
+Currently in **beta state**, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
 
 <br>
 <p align="center">
@@ -24,20 +24,22 @@ Currently in an **alpha state**, this core is in active development with assista
 
 # Known Issues / Tasks
 
-- When test menu (diagnostics) is connected as an input the game hangs on "ALL MEMORY OK!"; occasionally pressing "F3" in the test menu will result in the game fully booting  
-- Wire service, test, and tilt; currently unstable  
-- Final stage shows the SNK logo from attract and inputs for joystick only function diagonally; clear after completing the stage  
-- Measure HBLANK, VBLANK, HSYNC, and VSYNC timings from PCB for analog output  
-- Transparency and layer priorities visible in attract mode (plane does not interleave with trees)  
-- Sprite layer needs to shift right one  
-- ~~One row of pixels/line missing from the right side of HVISIBLE~~  
-- ~~Update inputs for 2L3B; correct mapping~~  
-- ~~Correct H/V offset options to shift left, right, up, and down~~  
-- Audio issues known, may be an issue with the jtopl2 core or the current usage<br>(No need to report further audio issues; it appears there are no audio issues in this particular game for OPL2)  
+- Measure HBLANK, VBLANK, HSYNC, and VSYNC timings from PCB for analog output [Task]  
+- Native Y/C output only supports PAL frequency for color due to refresh rate [Issue]  
+- Update Y/C module by [**MikeS11**](https://github.com/MikeS11) [Task]  <br><br>
+- ~~Wire service, test, and tilt~~ [Task]  
+- ~~Transparency and layer priorities~~ [Issue]  
+- ~~Update inputs for 2L3B; correct mapping~~ [Issue]  
+- ~~Sprite layer needs to shift right one column~~ [Issue]  
+- ~~Correct H/V offset options to shift left, right, up, and down~~ [Task]  
+- ~~One row of pixels/line missing from the right side of HVISIBLE~~ [Issue]  
+- ~~When test menu (diagnostics) is connected as an input the game hangs on "ALL MEMORY OK!"~~ [Issue]  
+- ~~Final stage shows the SNK logo from attract and inputs for joystick only function diagonally~~ [Issue]  <br><br>
+- Audio issues known, may be an issue with the jtopl2 core or the current usage<br>(No need to report further audio issues; appears there are no audio issues in this core) [Issue]  
 
 # PCB Check List
 
-FPGA implementation is based on [**mame source**](https://github.com/mamedev/mame/blob/master/src/mame/snk/prehisle.cpp) and will be verified against an authentic SNK Prehistoric Isle in 1930 PCB.
+FPGA implementation is loosely based on [**mame source**](https://github.com/mamedev/mame/blob/master/src/mame/snk/prehisle.cpp) and will be verified against an authentic SNK Prehistoric Isle in 1930 PCB.
 
 ### Clock Information
 
@@ -45,14 +47,16 @@ H-Sync      | V-Sync      | Source | Refresh Rate      |
 ------------|-------------|--------|-------------------|
 15.625kHz   | 54.065743Hz | OSSC   | 15.61kHz / 54.1Hz |
 
-Until PCB measurements are taken, additional timing information can be found [**here**](https://user-images.githubusercontent.com/32810066/187164273-01cf0a2e-6eb4-47ce-ba79-830a7e977212.jpg) and [**here**](https://mametesters.org/view.php?id=5939).
+Until PCB measurements are taken timing information is available below:
+[**OSSC**](https://user-images.githubusercontent.com/32810066/187164273-01cf0a2e-6eb4-47ce-ba79-830a7e977212.jpg)
+[**OSSC**](https://mametesters.org/view.php?id=5939)
 
 ### Crystal Oscillators
 
 Location              | Freq (MHz) | Use                       |
 ----------------------|------------|---------------------------|
-4MHZ (Top Board)      | 4.000      | Z80                       |
-18MHZ (Top Board)     | 18.000     | M68000 / YM3812 / uPD7759 |
+4MHZ (Top Board)      | 4.000      | Z80 / YM3812 / uPD7759    |
+18MHZ (Top Board)     | 18.000     | M68000                    |
 12MHz (Bottom Board)  | 12.000     | Pxl Clock                 |
 
 **Pixel clock:** 6.00 MHz
@@ -74,7 +78,7 @@ E14 (Top Board) | [**NEC uPD7759**](https://github.com/jotego/jt7759)           
 
 # PCB Features
 
-- TBD
+- TBD; beta implementation.
 
 # Controls
 
