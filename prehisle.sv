@@ -209,7 +209,15 @@ assign m68k_a[0] = 0;
 wire [1:0]  aspect_ratio = status[9:8];
 wire        orientation = ~status[3];
 wire [2:0]  scan_lines = status[6:4];
-wire        refresh_mod = status[19];
+reg         refresh_mod;
+reg         new_vmode;
+
+always @(posedge clk_sys) begin
+    if (refresh_mod != ~status[19]) begin
+        refresh_mod <= ~status[19];
+        new_vmode <= ~new_vmode;
+    end
+end
 
 wire [3:0]  hs_offset = status[27:24];
 wire [3:0]  vs_offset = status[31:28];
@@ -238,7 +246,7 @@ localparam CONF_STR = {
     "P1-;",
     "P1O7,Video Mode,NTSC,PAL;",
     "P1OM,Video Signal,RGBS/YPbPr,Y/C;",
-    "P1OJ,Video Refresh Rate,54.1Hz,59.2Hz;",
+    "P1OJ,Video Timing,54.1Hz (PCB),59.2Hz (MAME);",
     "P1-;",
     "P1OOR,H-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
     "P1OSV,V-sync Pos Adj,0,1,2,3,4,5,6,7,-8,-7,-6,-5,-4,-3,-2,-1;",
@@ -286,6 +294,7 @@ hps_io #(.CONF_STR(CONF_STR)) hps_io
     .status_menumask(direct_video),
     .forced_scandoubler(hps_forced_scandoubler),
     .gamma_bus(gamma_bus),
+    .new_vmode(new_vmode),
     .direct_video(direct_video),
     .video_rotated(video_rotated),
     
