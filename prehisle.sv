@@ -234,7 +234,7 @@ assign VIDEO_ARY = (!aspect_ratio) ? (orientation  ? 8'd7 : 8'd8) : 12'd0;
 
 `include "build_id.v" 
 localparam CONF_STR = {
-    "prehisle;;",
+    "prehisle1930;;",
     "-;",
     "P1,Video Settings;",
     "P1-;",
