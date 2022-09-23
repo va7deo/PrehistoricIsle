@@ -462,8 +462,6 @@ reg  [5:0]  clk9_count;
 reg  [5:0]  clk6_count;
 reg  [5:0]  clk4_count;
 reg [15:0]  clk_upd_count;
-reg         clk_upd_even;
-
 
 always @ (posedge clk_sys) begin
 
@@ -502,9 +500,8 @@ always @ (posedge clk_sys) begin
     clk_upd <= ( clk_upd_count == 0 );
 
     // 72MHz / 113 == 637.168KHz.  should be 640.
-    // fractional divider 112.5  alternate between 112 & 113
-    if ( clk_upd_count == (8'h111 + clk_upd_even ) ) begin    
-        clk_upd_even <= ~clk_upd_even ;
+    // todo : use fractional divider 112.5  alternate between 112 & 113
+    if ( clk_upd_count == 112 ) begin
         clk_upd_count <= 0;
     end else if ( pause_cpu == 0 ) begin
         clk_upd_count <= clk_upd_count + 1;
