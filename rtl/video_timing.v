@@ -5,14 +5,14 @@ module video_timing
     input       clk_pix,
     input       reset,
 
-    input [2:0] pcb,
-    input       refresh_mod,
-    
-    input signed [3:0] hs_offset,
-    input signed [3:0] vs_offset,
+    input  [2:0] pcb,
+    input        refresh_mod,
 
-    input signed [3:0] hs_width,
-    input signed [3:0] vs_width,
+    input  signed [3:0] hs_offset,
+    input  signed [3:0] vs_offset,
+
+    input  signed [3:0] hs_width,
+    input  signed [3:0] vs_width,
 
     output [8:0] hc,
     output [8:0] vc,
@@ -24,22 +24,19 @@ module video_timing
     output reg  vbl 
 );
 
-wire [8:0] refresh_adj = refresh_mod ? 0 : 20 ;
-
 wire [8:0] h_ofs = 0;
 wire [8:0] HBL_START  = 256 ;
 wire [8:0] HBL_END    = 0 ;
-wire [8:0] HS_START   = HBL_START + 44 + $signed(hs_offset) ;
+wire [8:0] HS_START   = HBL_START + 44 + $signed(hs_offset);
 wire [8:0] HS_END     = HBL_START + 76 + $signed(hs_offset) + $signed(hs_width);
 wire [8:0] HTOTAL     = 383;
 
 wire [8:0] v_ofs = 0;
 wire [8:0] VBL_START  = 241 ;
 wire [8:0] VBL_END    = 17 ;
-
-wire [8:0] VS_START   = VBL_START + ( refresh_mod ? 20 : 10 ) + $signed(vs_offset) ;
-wire [8:0] VS_END     = VBL_START + ( refresh_mod ? 28 : 18 ) + $signed(vs_offset) + $signed(vs_width);
-wire [8:0] VTOTAL     = 288 - ( refresh_mod ? 0 : 20 );
+wire [8:0] VS_START   = VBL_START + ( refresh_mod ? 20 : 10 ) + $signed(vs_offset);
+wire [8:0] VS_END     = VBL_START + ( refresh_mod ? 28 : 16 )+ $signed(vs_offset) + $signed(vs_width);
+wire [8:0] VTOTAL     = 288 - ( refresh_mod ? 0 : 25 );
 
 reg [8:0] v;
 reg [8:0] h;
@@ -57,9 +54,7 @@ always @ (posedge clk) begin
 
         hsync <= 0;
         vsync <= 0;
-        
     end else if ( clk_pix == 1 ) begin 
-        
         // counter
         if (h == HTOTAL) begin
             h <= 0;

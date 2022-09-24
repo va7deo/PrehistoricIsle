@@ -3,9 +3,7 @@
 
 FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O).
 
-The intent is for this core to be a 1:1 playable implementation of Prehistoric Isle in 1930 arcade hardware.
-
-Currently in **beta state**, this core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
+The intent is for this core to be a 1:1 playable implementation of Prehistoric Isle in 1930 arcade hardware. This core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
 
 <br>
 <p align="center">
@@ -17,16 +15,15 @@ Currently in **beta state**, this core is in active development with assistance 
 
 |Name| Purpose | Author |
 |----|---------|--------|
-| [**fx68k**](https://github.com/ijor/fx68k)      | [**Motorola 68000 CPU**](https://en.wikipedia.org/wiki/Motorola_68000) | Jorge Cwik     |
-| [**t80**](https://opencores.org/projects/t80)   | [**Zilog Z80 CPU**](https://en.wikipedia.org/wiki/Zilog_Z80)           | Daniel Wallner |
-| [**jtopl2**](https://github.com/jotego/jtopl)   | [**Yamaha OPL 2**](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2)      | Jose Tejada    |
-| [**jt7759**](https://github.com/jotego/jt7759)  | [**NEC uPD7759**](https://github.com/jotego/jt7759)                    | Jose Tejada    |
+| [**fx68k**](https://github.com/ijor/fx68k)                      | [**Motorola 68000 CPU**](https://en.wikipedia.org/wiki/Motorola_68000) | Jorge Cwik     |
+| [**t80**](https://opencores.org/projects/t80)                   | [**Zilog Z80 CPU**](https://en.wikipedia.org/wiki/Zilog_Z80)           | Daniel Wallner |
+| [**jtopl2**](https://github.com/jotego/jtopl)                   | [**Yamaha OPL 2**](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2)      | Jose Tejada    |
+| [**jt7759**](https://github.com/jotego/jt7759)                  | [**NEC uPD7759**](https://github.com/jotego/jt7759)                    | Jose Tejada    |
+| [**yc_out**](https://github.com/MikeS11/MiSTerFPGA_YC_Encoder)  | [**Y/C Video Module**](https://en.wikipedia.org/wiki/S-Video)          | Mike Simone    |
 
 # Known Issues / Tasks
 
-- Measure HBLANK, VBLANK, HSYNC, and VSYNC timings from PCB for analog output [Task]  
-- Native Y/C output only supports PAL frequency for color due to refresh rate [Issue]  
-- Update Y/C module by [**MikeS11**](https://github.com/MikeS11) [Task]  <br><br>
+- Measure HBLANK, VBLANK, HSYNC, and VSYNC timings from PCB for analog output [Task - Low Priority]  <br><br>
 - ~~Wire service, test, and tilt~~ [Task]  
 - ~~Transparency and layer priorities~~ [Issue]  
 - ~~Update inputs for 2L3B; correct mapping~~ [Issue]  
@@ -35,6 +32,9 @@ Currently in **beta state**, this core is in active development with assistance 
 - ~~One row of pixels/line missing from the right side of HVISIBLE~~ [Issue]  
 - ~~When test menu (diagnostics) is connected as an input the game hangs on "ALL MEMORY OK!"~~ [Issue]  
 - ~~Final stage shows the SNK logo from attract and inputs for joystick only function diagonally~~ [Issue]  <br><br>
+- ~~Update Y/C module by MikeS11~~ [Task]  
+- ~~Native Y/C output only supports PAL frequency for color due to refresh rate [Issue]~~  
+- ~~Add Video Timings toggle to support 54.1Hz (PCB) or 59.2Hz (MAME) for users who expierence sync issues with their CRT~~ [Issue]  
 - Audio issues known, may be an issue with the jtopl2 core or the current usage<br>(No need to report further audio issues; appears there are no audio issues in this core) [Issue]  
 
 # PCB Check List
@@ -47,8 +47,8 @@ H-Sync      | V-Sync      | Source | Refresh Rate      |
 ------------|-------------|--------|-------------------|
 15.625kHz   | 54.065743Hz | OSSC   | 15.61kHz / 54.1Hz |
 
-Until PCB measurements are taken timing information is available below:
-[**OSSC**](https://user-images.githubusercontent.com/32810066/187164273-01cf0a2e-6eb4-47ce-ba79-830a7e977212.jpg)
+Until PCB measurements are taken timing information is available below:<br><br>
+[**OSSC**](https://user-images.githubusercontent.com/32810066/187164273-01cf0a2e-6eb4-47ce-ba79-830a7e977212.jpg)<br>
 [**OSSC**](https://mametesters.org/view.php?id=5939)
 
 ### Crystal Oscillators
@@ -76,15 +76,36 @@ H12 (Top Board) | [**Zilog Z80 CPU**](https://en.wikipedia.org/wiki/Zilog_Z80)  
 C12 (Top Board) | [**Yamaha YM3812**](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2)       | OPL2          |
 E14 (Top Board) | [**NEC uPD7759**](https://github.com/jotego/jt7759)                      | ADPCM Decoder |
 
-# PCB Features
+# Core Features
 
-- TBD; beta implementation.
+### Video Timings
+
+- Video timings can be modified if you experience sync issues (rolling) with CRT displays. Enable timing changes in the OSD by toggling 54.1Hz (PCB) to 59.2Hz (MAME).
+
+Refresh Rate      | Timing Parameter | HTOTAL | VTOTAL |
+------------------|------------------|--------|--------|
+15.63kHz / 54.1Hz | PCB              | 384    | 289    |
+15.63kHz / 59.2Hz | MAME             | 384    | 264    |
+
+### Native Y/C Output
+
+- Native Y/C ouput is possible with the [**analog I/O rev 6.1 pcb**](https://github.com/MiSTer-devel/Main_MiSTer/wiki/IO-Board). Using the following cables, [**HD-15 to BNC cable**](https://www.amazon.com/StarTech-com-Coax-RGBHV-Monitor-Cable/dp/B0033AF5Y0/) will transmit Y/C over the green and red lines. Choose an appropriate adapter to feed [**Y/C (S-Video)**](https://www.amazon.com/MEIRIYFA-Splitter-Extension-Monitors-Transmission/dp/B09N19XZJQ) to your display.
+
+### H/V Adjustments
+
+- There are two H/V toggles, H/V-sync positioning adjust and H/V-sync width adjust. Positioning will move the display for centering on CRT display. The sync width adjust can be used to for sync issues (rolling) without modifying the video timings.
+
+### Scandoubler Options
+
+- Additional toggle to enable the scandoubler without changing ini settings and new scanline option for 100% is available, this draws a black line every other frame. Below is an example.
+
+<table><tr><th>Scandoubler Fx</th><th>Scanlines 25%</th><th>Scanlines 50%</th><th>Scanlines 75%</th><th>Scanlines 100%</th><tr><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/191252689-acfb3610-89d9-4ec2-9f69-dc285d9cf6dd.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/191252701-2cd221dd-0e31-49c3-89ef-e0dcafdd4916.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/191252717-b4f7bd03-5e76-4e43-b055-1a418589a169.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/191252728-638d1a44-07ff-4060-918f-ebfb79a6f206.png"></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/191252737-be45e006-c172-471a-80dd-ee1335cd8ede.png"></td></tr></table>
 
 # Controls
 
 <br>
 
-<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Control Type</th></tr><tr><td><p align="center">Prehistoric Isle in 1930</p></td><td><p align="center">8-Way</p></td><td><p align="center"><img src="https://user-images.githubusercontent.com/32810066/187161370-1d549928-996d-4f0b-9451-98f0a878ea3d.png"></td><td><p align="center">Co-Op</td> </table>
+<table><tr><th>Game</th><th>Joystick</th><th>Service Menu</th><th>Control Type</th></tr><tr><td><p align="center">Prehistoric Isle in 1930</p></td><td><p align="center">8-Way</p></td><td><br> <p align="center"><img width="128" height="112" src="https://user-images.githubusercontent.com/32810066/187161370-1d549928-996d-4f0b-9451-98f0a878ea3d.png"></td><td><p align="center">Co-Op</td> </table>
 
 <br>
 
