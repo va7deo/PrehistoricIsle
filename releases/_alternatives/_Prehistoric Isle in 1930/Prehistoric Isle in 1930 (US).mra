@@ -8,7 +8,7 @@
     <players>2</players>
     <joystick>8-way</joystick>
     <rotation>Horizontal</rotation>
-    <region>World</region>
+    <region>US</region>
 
     <switches default="FB,FF">
         <!-- DSW1 -->
@@ -20,7 +20,7 @@
         <!-- DSW2 -->
         <dip name="Difficulty Level" bits="8,9" ids="Hardest,Hard,Easy,Normal"/>
         <dip name="Demo Sound/Cheat" bits="10,11" ids="Freeze,Inf. Lives,Sound Off,Sound On"/>
-        <dip name="Bonus Life" bits="12,13" ids="None,300/500K,150/300K,100/150K"/>
+        <dip name="Bonus Life" bits="12,13" ids="None,300/500k,150/300k,100/150k"/>
         <dip name="Continue Mode" bits="14" ids="No,Yes"/>
     </switches>
 

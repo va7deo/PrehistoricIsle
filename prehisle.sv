@@ -766,7 +766,7 @@ always @ (posedge clk_sys) begin
                 pix_data <= fg_rom_data;
                 tile_state <= 16;
             end
-        end else if ( tile_state == 16) begin 
+        end else if ( tile_state == 16) begin
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_fg_w <= 1;
             case ( fg_x[2:0] ) // case ( x[2:0] )
@@ -812,7 +812,7 @@ always @ (posedge clk_sys) begin
                 pix_data <= bg_rom_data;
                 tile_state <= 26;
             end
-        end else if ( tile_state == 26) begin 
+        end else if ( tile_state == 26) begin
             line_buf_addr_w <= { vc[0], x[8:0] };
             line_buf_bg_w <= 1;
             case ( { 3 { tilemap_rom_data[11] } } ^ bg_x[2:0] ) // case ( x[2:0] )
@@ -1298,31 +1298,31 @@ wire MREQ_n;
 wire M1_n;
 
 T80pa z80 (
-    .RESET_n    ( ~reset ),
-    .CLK        ( clk_sys ),
-    .CEN_p      ( clk_4M ),
-    .CEN_n      ( ~clk_4M ),
-    .WAIT_n     ( z80_wait_n ), // z80_wait_n
-    .INT_n      ( opl_irq_n ),  // opl_irq_n
-    .NMI_n      ( z80_nmi_n ),
-    .BUSRQ_n    ( 1'b1 ),
-    .RD_n       ( z80_rd_n ),
-    .WR_n       ( z80_wr_n ),
-    .A          ( z80_addr ),
-    .DI         ( z80_din  ),
-    .DO         ( z80_dout ),
+    .RESET_n    ( ~reset     ),
+    .CLK        ( clk_sys    ),
+    .CEN_p      ( clk_4M     ),
+    .CEN_n      ( ~clk_4M    ),
+    .WAIT_n     ( z80_wait_n ),    // z80_wait_n
+    .INT_n      ( opl_irq_n  ),    // opl_irq_n
+    .NMI_n      ( z80_nmi_n  ),
+    .BUSRQ_n    ( 1'b1       ),
+    .RD_n       ( z80_rd_n   ),
+    .WR_n       ( z80_wr_n   ),
+    .A          ( z80_addr   ),
+    .DI         ( z80_din    ),
+    .DO         ( z80_dout   ),
     // unused
-    .DIRSET     ( 1'b0     ),
-    .DIR        ( 212'b0   ),
-    .OUT0       ( 1'b0     ),
-    .RFSH_n     (),
-    .IORQ_n     ( IORQ_n ),
-    .M1_n       ( M1_n ),        // for interrupt ack
-    .BUSAK_n    (),
-    .HALT_n     ( 1'b1 ),
-    .MREQ_n     ( MREQ_n ),
-    .Stop       (),
-    .REG        ()
+    .DIRSET     ( 1'b0       ),
+    .DIR        ( 212'b0     ),
+    .OUT0       ( 1'b0       ),
+    .RFSH_n     (            ),
+    .IORQ_n     ( IORQ_n     ),
+    .M1_n       ( M1_n       ),    // for interrupt ack
+    .BUSAK_n    (            ),
+    .HALT_n     ( 1'b1       ),
+    .MREQ_n     ( MREQ_n     ),
+    .Stop       (            ),
+    .REG        (            )
 );
 
 reg opl_wait;
@@ -1356,7 +1356,7 @@ always @ (posedge clk_sys) begin
             end
         end
         sound_wr <= 0;
-        if ( z80_wr_n == 0 ) begin 
+        if ( z80_wr_n == 0 ) begin
             // OPL2
             if ( z80_sound0_cs == 1 || z80_sound1_cs == 1) begin
                 sound_data  <= z80_dout;
@@ -1425,24 +1425,24 @@ reg upd_start_flag;
 jt7759 upd
 (
     .rst( reset | upd_reset ),
-    .clk(clk_sys),            // Use same clock as sound CPU
-    .cen(clk_640k),           // 640kHz
-    .stn(upd_start_n),        // Start (active low)
-    .cs(1'b1),
-    .mdn(1'b1),               // MODE: 1 for stand alone mode, 0 for slave mode
-                              // see chart in page 13 of PDF
-    .busyn(),
+    .clk( clk_sys           ),    // Use same clock as sound CPU
+    .cen( clk_640k          ),    // 640kHz
+    .stn( upd_start_n       ),    // Start (active low)
+    .cs( 1'b1               ),
+    .mdn( 1'b1              ),    // MODE: 1 for stand alone mode, 0 for slave mode
+                                  // see chart in page 13 of PDF
+    .busyn(                 ),
     // CPU interface
-    .wrn(1'b1),               // for slave mode only, 31.7us after drqn is set
-    .din(upd_din),
-    .drqn(),                  // data request. 50-70us delay after mdn goes low
+    .wrn( 1'b1              ),    // for slave mode only, 31.7us after drqn is set
+    .din( upd_din           ),
+    .drqn(                  ),    // data request. 50-70us delay after mdn goes low
     // ROM interface
-    .rom_cs(upd_rom_cs),      // equivalent to DRQn in original chip
-    .rom_addr(upd_addr),      // output        [16:0]
-    .rom_data(upd_rom_data),  // input          [7:0]
-    .rom_ok(upd_rom_valid),
+    .rom_cs( upd_rom_cs     ),    // equivalent to DRQn in original chip
+    .rom_addr( upd_addr     ),    // output        [16:0]
+    .rom_data( upd_rom_data ),    // input          [7:0]
+    .rom_ok( upd_rom_valid  ),
     // Sound output
-    .sound(upd_sample_out)    //output signed [8:0]
+    .sound( upd_sample_out  )     //output signed [8:0]
 );
 
 wire      audio_en    = status[11];       // audio enable
@@ -1777,7 +1777,7 @@ dual_port_ram #(.LEN(512), .DATA_WIDTH(64)) sprite_buffer (
     .clock_b ( clk_sys ),
     .address_b ( sprite_buffer_addr ),
     .wren_b ( sprite_buffer_w ),
-    .data_b ( sprite_buffer_din  ),
+    .data_b ( sprite_buffer_din ),
     .q_b( )
     );
 
