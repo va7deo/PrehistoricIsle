@@ -285,7 +285,7 @@ localparam CONF_STR = {
 wire hps_forced_scandoubler;
 wire forced_scandoubler = hps_forced_scandoubler | status[10];
 
-wire  [2:0] buttons;
+wire  [1:0] buttons;
 wire [63:0] status;
 wire [10:0] ps2_key;
 wire [15:0] joy0, joy1;
@@ -328,12 +328,6 @@ always @(posedge clk_sys) begin
     end
 end
 
-always @(posedge clk_sys) begin
-    if (ioctl_wr && ioctl_index==1) begin
-        pcb <= ioctl_dout;
-    end
-end
-
 wire        direct_video;
 
 wire        ioctl_download;
@@ -346,23 +340,21 @@ wire [24:0] ioctl_addr;
 wire  [7:0] ioctl_dout;
 wire  [7:0] ioctl_din;
 
-reg   [1:0] pcb;
-
 wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
 // Inputs use inversion as a form of protection
-reg [15:0] p1;
-reg [15:0] p2;
-reg [15:0] dsw1;
-reg [15:0] dsw2;
-reg [15:0] coin;
+reg [7:0] p1;
+reg [7:0] p2;
+reg [7:0] dsw1;
+reg [7:0] dsw2;
+reg [7:0] coin;
 reg p1_invert;
 
 always @ (posedge clk_sys ) begin
-    p1 <= 16'hffff;
+    p1 <= 8'hff;
     p1[7:0] <= { 8 {p1_invert} } ^ ~{ start1, p1_buttons[2:0], p1_right, p1_left , p1_down, p1_up};
-    p2 <= 16'hffff;
+    p2 <= 8'hff;
     p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left ,p2_down, p2_up};
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
@@ -584,7 +576,6 @@ video_timing video_timing (
     .clk(clk_6M),
     .clk_pix(1'b1),
     .reset(reset),
-    .pcb(pcb),
     .hs_offset(hs_offset),
     .vs_offset(vs_offset),
     .hs_width(hs_width),
@@ -1122,7 +1113,6 @@ wire    z80_upd_r_cs;
 
 chip_select cs (
     .clk(clk_sys),
-    .pcb(pcb),
 
     // 68k bus
     .m68k_a(m68k_a),
@@ -1445,8 +1435,6 @@ jt7759 upd
     .sound( upd_sample_out  )     //output signed [8:0]
 );
 
-wire      audio_en    = status[11];       // audio enable
-
 wire [1:0] opl2_level = status[44:43];    // opl2 audio mix
 wire [1:0] upd_level = status[46:45];     // adpcm audio mix
 
@@ -1495,14 +1483,14 @@ jtframe_mixer #(.W0(16), .W1(9), .WOUT(16)) u_mix_mono(
     .peak   (                )
 );
 
-always @ * begin
-    if ( audio_en == 0 ) begin
+always @ (posedge clk_sys ) begin
+    if ( pause_cpu == 1 ) begin
+        AUDIO_L <= 0;
+        AUDIO_R <= 0;
+    end else if ( pause_cpu == 0 ) begin
         // mix audio
         AUDIO_L <= mono;
         AUDIO_R <= mono;
-    end else begin
-        AUDIO_L <= 0;
-        AUDIO_R <= 0;
     end
 end
 

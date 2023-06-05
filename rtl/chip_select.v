@@ -3,7 +3,6 @@
 module chip_select
 (
     input        clk,
-    input  [1:0] pcb,
 
     input [23:0] m68k_a,
     input        m68k_as_n,
