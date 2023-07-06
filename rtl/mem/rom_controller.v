@@ -47,7 +47,7 @@ module rom_controller
     // sound ROM #1 interface
     input sound_rom_cs,
     input sound_rom_oe,
-    input  [15:0] sound_rom_addr,
+    input  [16:0] sound_rom_addr,
     output [7:0] sound_rom_data,
     output sound_rom_data_valid,        
 

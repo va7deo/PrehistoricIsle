@@ -344,17 +344,17 @@ wire [21:0] gamma_bus;
 
 //<buttons names="Fire,Jump,Start,Coin,Pause" default="A,B,R,L,Start" />
 // Inputs use inversion as a form of protection
-reg [7:0] p1;
-reg [7:0] p2;
-reg [7:0] dsw1;
-reg [7:0] dsw2;
-reg [7:0] coin;
+reg [15:0] p1;
+reg [15:0] p2;
+reg [15:0] dsw1;
+reg [15:0] dsw2;
+reg [15:0] coin;
 reg p1_invert;
 
 always @ (posedge clk_sys ) begin
-    p1 <= 8'hff;
+    p1 <= 16'hffff;
     p1[7:0] <= { 8 {p1_invert} } ^ ~{ start1, p1_buttons[2:0], p1_right, p1_left , p1_down, p1_up};
-    p2 <= 8'hff;
+    p2 <= 16'hffff;
     p2[7:0] <= ~{ start2, p2_buttons[2:0], p2_right, p2_left ,p2_down, p2_up};
     dsw1 <=  { 8'hff, sw[0] };
     dsw2 <=  { 8'hff, ~vbl, sw[1][6:0] };
@@ -1334,15 +1334,6 @@ always @ (posedge clk_sys) begin
             if ( z80_sound0_cs == 1 ) begin
                 sound_addr <= 0;
                 z80_din <= opl_dout;
-//                if ( z80_wait_n == 1 ) begin
-//                    // wait one clock
-//                    z80_wait_n <= 0;
-//                end else begin
-//                    // needs to wait to read
-//                    z80_din <= opl_dout;
-//                    // reset wait
-//                    z80_wait_n <= 1;
-//                end
             end
         end
         sound_wr <= 0;
@@ -1352,17 +1343,6 @@ always @ (posedge clk_sys) begin
                 sound_data  <= z80_dout;
                 sound_addr <= z80_sound1_cs;
                 sound_wr <= 1;
-            end
-            // 7759
-            if ( z80_upd_cs == 1 ) begin
-                upd_din <= z80_dout;
-                upd_start_n <= 1;
-                // need a pulse to trigger the 7759 start
-                upd_start_flag <= 1;
-            end
-            if ( upd_start_flag == 1 ) begin
-                upd_start_n <= 0;
-                upd_start_flag <= 0;
             end
             if ( z80_upd_r_cs == 1 ) begin
                 upd_reset <= 1;
@@ -1407,24 +1387,21 @@ jtopl #(.OPL_TYPE(2)) opl
     .sample(opl_sample_clk)
 );
 
-reg [7:0] upd_din;
 reg upd_reset;
-reg upd_start_n;
-reg upd_start_flag;
 
 jt7759 upd
 (
     .rst( reset | upd_reset ),
     .clk( clk_sys           ),    // Use same clock as sound CPU
     .cen( clk_640k          ),    // 640kHz
-    .stn( upd_start_n       ),    // Start (active low)
+    .stn( z80_wr_n | ~z80_upd_cs ),    // Start (active low)
     .cs( 1'b1               ),
     .mdn( 1'b1              ),    // MODE: 1 for stand alone mode, 0 for slave mode
                                   // see chart in page 13 of PDF
     .busyn(                 ),
     // CPU interface
     .wrn( 1'b1              ),    // for slave mode only, 31.7us after drqn is set
-    .din( upd_din           ),
+    .din( z80_dout          ),
     .drqn(                  ),    // data request. 50-70us delay after mdn goes low
     // ROM interface
     .rom_cs( upd_rom_cs     ),    // equivalent to DRQn in original chip
