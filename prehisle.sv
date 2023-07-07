@@ -257,9 +257,7 @@ localparam CONF_STR = {
     "P1-;",
     "P2,Audio Settings;",
     "P2-;",
-    "P2OB,OPL2/ADPCM Audio,On,Off;",
-    "P2-;",
-    "P2oDE,ADPCM Volume,Default,50%,25%,Off;",
+    "P2oDE,ADPCM Volume,Default,37.5%,25%,Off;",
     "P2oBC,OPL2 Volume,Default,50%,25%,Off;",
     "P2-;",
     "-;",
@@ -269,10 +267,12 @@ localparam CONF_STR = {
     "P3-;",
     "P3OF,68k Freq.,9Mhz,12MHz;",
     "P3-;",
-    "P3o5,Text Layer,On,Off;",
+    "P3-;",
+    "P3-;",
     "P3o6,Foreground Layer,On,Off;",
     "P3o7,Background Layer,On,Off;",
     "P3o8,Sprite Layer,On,Off;",
+    "P3o5,Text Layer,On,Off;",
     "P3-;",
     "DIP;",
     "-;",
@@ -1433,8 +1433,8 @@ always @( posedge clk_sys, posedge reset ) begin
         3: opl2_mult <= 8'h00;    // 0%
     endcase
     case( upd_level )
-        0: upd_mult <= 8'h0c;    // 75%
-        1: upd_mult <= 8'h08;    // 50%
+        0: upd_mult <= 8'h08;    // 50%
+        1: upd_mult <= 8'h06;    // 37.50%
         2: upd_mult <= 8'h04;    // 25%
         3: upd_mult <= 8'h00;    // 0%
     endcase
