@@ -1,11 +1,11 @@
 
-# SNK M68000 (Prehistoric Isle in 1930) FPGA Implementation
+# SNK M68000 (Prehistoric Isle) FPGA Implementation
 
-FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O).
+FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O) with assistance from [**atrac17**](https://github.com/atrac17).
 
-The intent is for this core to be a 1:1 playable implementation of Prehistoric Isle in 1930 arcade hardware. This core is in active development with assistance from [**atrac17**](https://github.com/atrac17).
+The intent is for this core to be a 1:1 playable implementation of Prehistoric Isle in 1930 arcade hardware. Pending PCB verification, on loan from [**XtraSmiley**](https://twitter.com/Xtrasmiley).
 
-<img width="" height="" src="">
+<img width="" height="" src="https://github.com/va7deo/PrehistoricIsle/assets/32810066/f206a42f-416a-455d-8359-8d2549b0ed8a">
 
 ## External Modules
 
