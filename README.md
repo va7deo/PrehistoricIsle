@@ -1,7 +1,7 @@
 
 # SNK M68000 (Prehistoric Isle) FPGA Implementation
 
-FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by [**Darren Olafson**](https://twitter.com/Darren__O) with assistance from [**atrac17**](https://github.com/atrac17).
+FPGA compatible core of SNK M68000 (Prehistoric Isle in 1930 based) arcade hardware for [**MiSTerFPGA**](https://github.com/MiSTer-devel/Main_MiSTer/wiki) written by **Erin Olafson** with assistance from [**atrac17**](https://github.com/atrac17).
 
 The intent is for this core to be a 1:1 playable implementation of Prehistoric Isle in 1930 arcade hardware. Pending PCB verification, on loan from [**XtraSmiley**](https://twitter.com/Xtrasmiley).
 
@@ -16,8 +16,8 @@ The intent is for this core to be a 1:1 playable implementation of Prehistoric I
 | [**jtopl2**](https://github.com/jotego/jtopl)                                      | [**Yamaha OPL 2**](https://en.wikipedia.org/wiki/Yamaha_OPL#OPL2)      | Jose Tejada                                    |
 | [**jt7759**](https://github.com/jotego/jt7759)                                     | [**NEC µPD7759**](https://github.com/jotego/jt7759)                    | Jose Tejada                                    |
 | [**yc_out**](https://github.com/MikeS11/MiSTerFPGA_YC_Encoder)                     | [**Y/C Video Module**](https://en.wikipedia.org/wiki/S-Video)          | Mike Simone                                    |
-| [**mem**](https://github.com/MiSTer-devel/Arcade-Rygar_MiSTer/tree/master/src/mem) | SDRAM Controller / Rom Downloader                                      | Josh Bassett, modified by Darren Olafson       |
-| [**core_template**](https://github.com/MiSTer-devel/Template_MiSTer)               | MiSTer Framework Template                                              | sorgelig, modified by Darren Olafson / atrac17 |
+| [**mem**](https://github.com/MiSTer-devel/Arcade-Rygar_MiSTer/tree/master/src/mem) | SDRAM Controller / Rom Downloader                                      | Josh Bassett, modified by Erin Olafson       |
+| [**core_template**](https://github.com/MiSTer-devel/Template_MiSTer)               | MiSTer Framework Template                                              | sorgelig, modified by Erin Olafson / atrac17 |
 
 # Known Issues / Tasks
 
@@ -120,7 +120,7 @@ FPGA implementation loosely based on [**mame source**](https://github.com/mamede
 
 # Support
 
-Please consider showing support for this and future projects via [**Darren's Ko-fi**](https://ko-fi.com/darreno) and [**atrac17's Patreon**](https://www.patreon.com/atrac17). While it isn't necessary, it's greatly appreciated.<br>
+Please consider showing support for this and future projects via [**Erin's Ko-fi**](https://ko-fi.com/Erino) and [**atrac17's Patreon**](https://www.patreon.com/atrac17). While it isn't necessary, it's greatly appreciated.<br>
 
 # Licensing
 
